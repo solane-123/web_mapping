@@ -14,14 +14,14 @@
 
     <header>
         <div class="logo-area">
-            <img src="logo/logo-site.jpg" alt="Logo" class="header-logo">
+            <img src="logo/logo-site.jpg" alt="Logo" class="header-logo"> 
             <span>Risques France</span>
         </div>
         <nav class="nav-tabs">
-            <button class="nav-btn active-tab" data-target="grid">Accueil</button>
+            <button class="nav-btn active-tab" data-target="grid" onclick="app.switchView('grid', this)">Accueil</button>
             <button class="nav-btn" onclick="app.openMap('naturel')">Carte Naturelle</button>
             <button class="nav-btn" onclick="app.openMap('technique')">Carte Technique</button>
-            <button class="nav-btn" data-target="stats">Statistiques</button>
+            <button class="nav-btn" data-target="stats" onclick="app.switchView('stats', this)">Statistiques</button>
         </nav>
     </header>
 
@@ -70,9 +70,7 @@
     <section id="view-map" class="view-section">
         <aside class="sidebar-controls">
             <div id="map-title" class="sidebar-header">Carte</div>
-            
             <div id="controls-container"></div>
-
             <button onclick="app.resetMap()" class="btn-reset">Tout masquer</button>
         </aside>
 
@@ -102,5 +100,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/main.js"></script> </body>
+    <script src="js/main.js"></script> 
+</body>
 </html>
