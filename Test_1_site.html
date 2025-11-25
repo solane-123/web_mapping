@@ -13,19 +13,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- 1. CONFIGURATION (COULEURS DA) --- */
+        /* --- CONFIGURATION COULEURS --- */
         :root {
+            /* Couleurs unitaires */
             --inondation: #3A6EA5;
             --seisme: #B23A48;
             --mouvement: #8C6A43;
             --nucleaire: #5A5A5A;
             --industriel: #6B8E23;
             --radon: #6A4C93;
-            --bg-color: #f8f9fa;
+            
+            /* Couleurs de Groupes */
+            --grp-terre: #8C6A43; /* Dominante Terre */
+            --grp-techno: #444;    /* Dominante Gris sombre */
+
+            --bg-color: #f4f6f8;
             --text-color: #333;
         }
 
-        /* --- 2. GLOBAL --- */
         body {
             font-family: 'Roboto', sans-serif;
             margin: 0; padding: 0;
@@ -35,115 +40,118 @@
             height: 100vh;
         }
 
-        /* --- 3. HEADER & NAVIGATION --- */
+        /* --- HEADER --- */
         header {
             background-color: white;
-            padding: 0 20px;
-            height: 60px;
+            padding: 0 25px;
+            height: 65px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: flex; align-items: center; justify-content: space-between;
             z-index: 1000;
         }
-
-        .logo-area { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 1.2rem; }
+        .logo-area { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.3rem; color: #2c3e50; }
         
-        /* Onglets de navigation */
-        .nav-tabs { display: flex; gap: 20px; height: 100%; }
+        .nav-tabs { display: flex; gap: 25px; height: 100%; }
         .nav-btn {
-            background: none; border: none;
-            height: 100%; padding: 0 15px;
-            cursor: pointer; font-size: 1rem; color: #666;
-            border-bottom: 3px solid transparent;
-            transition: all 0.3s;
+            background: none; border: none; height: 100%; padding: 0 5px;
+            cursor: pointer; font-size: 1rem; color: #7f8c8d; font-weight: 500;
+            border-bottom: 3px solid transparent; transition: all 0.3s;
         }
-        .nav-btn:hover { color: var(--inondation); background: #f4f8fb; }
-        .nav-btn.active-tab {
-            color: var(--inondation);
-            border-bottom: 3px solid var(--inondation);
-            font-weight: bold;
-        }
+        .nav-btn:hover { color: var(--inondation); }
+        .nav-btn.active-tab { color: var(--inondation); border-bottom: 3px solid var(--inondation); }
 
-        /* --- 4. GESTION DES VUES (Carte vs Grille) --- */
-        .view-section {
-            display: none; /* Caché par défaut */
-            flex: 1;
-            height: calc(100vh - 60px);
-            overflow: hidden;
-        }
+        /* --- VUES (Gestion globale) --- */
+        .view-section { display: none; flex: 1; height: calc(100vh - 65px); overflow: hidden; }
         .view-section.visible { display: flex; }
 
-        /* --- VUE 1 : CARTE (Layout existant) --- */
-        #view-map { flex-direction: row; }
-        .sidebar {
-            width: 280px; background: white; padding: 20px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
-            overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
-        }
-        .risk-btn {
-            display: flex; align-items: center; padding: 10px;
-            border: none; background: #f9f9f9; border-radius: 8px;
-            cursor: pointer; text-align: left; font-weight: 500; color: #555;
-            transition: 0.2s; border-left: 4px solid transparent;
-        }
-        .risk-btn:hover { transform: translateX(3px); background: #eaeaea; }
-        .risk-btn.active { background: #eef4fa; font-weight: bold; }
-        
-        .dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; }
-        
-        #map { flex: 1; height: 100%; background: #ddd; }
-
-        /* --- VUE 2 : GRILLE (Nouveau design cartes) --- */
+        /* --- VUE 1 : GRILLE HIERARCHISÉE --- */
         #view-grid {
             padding: 40px;
             overflow-y: auto;
-            justify-content: center;
+            flex-direction: column; /* Important pour les titres de sections */
+            align-items: center;
+        }
+
+        .category-section {
+            width: 100%; max-width: 1000px; margin-bottom: 50px;
         }
         
+        .section-title {
+            font-size: 1.5rem; color: #2c3e50; margin-bottom: 25px;
+            border-left: 5px solid var(--inondation); padding-left: 15px;
+            display: flex; align-items: center; gap: 10px;
+        }
+
         .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Cartes un peu plus larges */
             gap: 30px;
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
         }
 
+        /* Styles des Cartes */
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            border: 1px solid transparent;
-            display: flex; flex-direction: column; align-items: center;
+            background: white; border-radius: 15px; padding: 35px;
+            text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+            cursor: pointer; transition: all 0.3s ease; border: 1px solid white;
+            position: relative; overflow: hidden;
         }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-color: #eee;
+        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
+        
+        /* Bannière de couleur en haut de la carte */
+        .card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+            background: #ccc; /* Sera écrasé par le style inline */
         }
 
         .card-icon {
-            width: 60px; height: 60px;
-            border-radius: 15px;
+            width: 70px; height: 70px; border-radius: 50%; margin: 0 auto 20px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 24px; color: white;
-            margin-bottom: 20px;
+            font-size: 28px; color: white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
-        .card h3 { margin: 0 0 15px 0; font-size: 1.2rem; color: #222; }
-        .card p { font-size: 0.9rem; color: #777; line-height: 1.6; margin-bottom: 20px; flex: 1; }
+        .card h3 { margin: 0 0 10px 0; font-size: 1.3rem; color: #333; }
+        .card p { font-size: 0.95rem; color: #666; line-height: 1.6; margin-bottom: 25px; }
         
-        .card-footer {
-            width: 100%;
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.8rem; color: #aaa; border-top: 1px solid #eee; padding-top: 15px;
+        .sub-risks {
+            display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: auto;
         }
+        .tag {
+            font-size: 0.75rem; padding: 4px 10px; border-radius: 20px;
+            background: #eee; color: #555; font-weight: 500;
+        }
+
+        /* --- VUE 2 : CARTE INTERACTIVE --- */
+        #view-map { flex-direction: row; }
+        
+        .sidebar {
+            width: 300px; background: white; padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500;
+            overflow-y: auto; display: flex; flex-direction: column;
+        }
+        
+        .sidebar-group-title {
+            font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;
+            color: #999; margin: 20px 0 10px 0; font-weight: bold;
+        }
+
+        .risk-toggle {
+            display: flex; align-items: center; padding: 12px; margin-bottom: 5px;
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+            font-size: 0.9rem; color: #444; user-select: none;
+        }
+        .risk-toggle:hover { background: #f0f0f0; }
+        
+        /* Checkbox simulée */
+        .chk-box {
+            width: 18px; height: 18px; border: 2px solid #ddd; border-radius: 4px;
+            margin-right: 12px; display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
+        }
+        .risk-toggle.active .chk-box { border-color: transparent; color: white; }
+        .risk-toggle.active { background: #f9f9f9; font-weight: 600; }
+
+        #map { flex: 1; height: 100%; background: #e0e0e0; }
 
     </style>
 </head>
@@ -151,119 +159,106 @@
 
     <header>
         <div class="logo-area">
-            <i class="fa-solid fa-map-location-dot" style="color: var(--nucleaire);"></i>
+            <i class="fa-solid fa-shield-halved" style="color: var(--inondation);"></i>
             <span>Risques France</span>
         </div>
         <nav class="nav-tabs">
-            <button class="nav-btn active-tab" onclick="switchView('grid')">Détail des Risques</button>
+            <button class="nav-btn active-tab" onclick="switchView('grid')">Dossiers</button>
             <button class="nav-btn" onclick="switchView('map')">Carte Interactive</button>
         </nav>
     </header>
 
     <section id="view-grid" class="view-section visible">
-        <div class="grid-container">
+        
+        <div class="category-section">
+            <div class="section-title">
+                <i class="fa-solid fa-leaf" style="color: var(--industriel);"></i>
+                Risques Naturels
+            </div>
             
-            <div class="card" onclick="goToMap('inondation', '#3A6EA5', 'Inondations')">
-                <div class="card-icon" style="background-color: var(--inondation);">
-                    <i class="fa-solid fa-water"></i>
+            <div class="grid-container">
+                <div class="card" onclick="goToMap(['inondation'])" style="--accent: var(--inondation)">
+                    <div class="card-icon" style="background-color: var(--inondation);">
+                        <i class="fa-solid fa-water"></i>
+                    </div>
+                    <h3>Inondations</h3>
+                    <p>Le risque naturel majeur en France. Couvre les crues, submersions marines et remontées de nappes.</p>
+                    <div class="sub-risks">
+                        <span class="tag">Crues</span>
+                        <span class="tag">Submersion</span>
+                    </div>
                 </div>
-                <h3>Inondations</h3>
-                <p>Les inondations représentent le risque naturel le plus coûteux en France, touchant des milliers de communes et causant des dégâts matériels importants.</p>
-                <div class="card-footer">
-                    <span>8 événements</span>
-                    <i class="fa-solid fa-arrow-right"></i>
+
+                <div class="card" onclick="goToMap(['seisme', 'mouvement', 'radon'])" style="--accent: var(--grp-terre)">
+                    <div class="card-icon" style="background-color: var(--grp-terre);">
+                        <i class="fa-solid fa-earth-europe"></i>
+                    </div>
+                    <h3>Terre & Géologie</h3>
+                    <p>Ensemble des risques liés à la structure des sols : sismicité, stabilité des terrains et émissions naturelles.</p>
+                    <div class="sub-risks">
+                        <span class="tag" style="color:var(--seisme)">Séisme</span>
+                        <span class="tag" style="color:var(--mouvement)">Mouvements</span>
+                        <span class="tag" style="color:var(--radon)">Radon</span>
+                    </div>
                 </div>
             </div>
-
-            <div class="card" onclick="goToMap('seisme', '#B23A48', 'Risque Sismique')">
-                <div class="card-icon" style="background-color: var(--seisme);">
-                    <i class="fa-solid fa-house-crack"></i>
-                </div>
-                <h3>Risque Sismique</h3>
-                <p>Bien que la France soit un pays de sismicité modérée, plusieurs régions sont exposées à des séismes potentiellement destructeurs (Alpes, Pyrénées).</p>
-                <div class="card-footer">
-                    <span>4 événements</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </div>
-
-            <div class="card" onclick="goToMap('mouvement', '#8C6A43', 'Mouvements de Terrain')">
-                <div class="card-icon" style="background-color: var(--mouvement);">
-                    <i class="fa-solid fa-hill-rockslide"></i>
-                </div>
-                <h3>Mouvements de Terrain</h3>
-                <p>Glissements de terrain, éboulements et effondrements constituent des risques majeurs dans les zones montagneuses et sur les terrains instables.</p>
-                <div class="card-footer">
-                    <span>4 événements</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </div>
-
-            <div class="card" onclick="goToMap('industriel', '#6B8E23', 'Accidents Industriels')">
-                <div class="card-icon" style="background-color: var(--industriel);">
-                    <i class="fa-solid fa-industry"></i>
-                </div>
-                <h3>Accidents Industriels</h3>
-                <p>Les sites industriels classés Seveso présentent des risques d'accidents majeurs. La réglementation impose des mesures strictes de prévention.</p>
-                <div class="card-footer">
-                    <span>12 sites</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </div>
-
-            <div class="card" onclick="goToMap('nucleaire', '#5A5A5A', 'Accidents Nucléaires')">
-                <div class="card-icon" style="background-color: var(--nucleaire);">
-                    <i class="fa-solid fa-radiation"></i>
-                </div>
-                <h3>Accidents Nucléaires</h3>
-                <p>Le parc nucléaire français est soumis à des normes strictes. Les incidents majeurs sont rares mais font l'objet d'une surveillance permanente.</p>
-                <div class="card-footer">
-                    <span>19 sites</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </div>
-
-            <div class="card" onclick="goToMap('radon', '#6A4C93', 'Radon')">
-                <div class="card-icon" style="background-color: var(--radon);">
-                    <i class="fa-solid fa-wind"></i>
-                </div>
-                <h3>Radon</h3>
-                <p>Le radon est un gaz radioactif naturel présent dans certaines régions géologiques. Il représente un risque sanitaire à long terme.</p>
-                <div class="card-footer">
-                    <span>Risque diffus</span>
-                    <i class="fa-solid fa-arrow-right"></i>
-                </div>
-            </div>
-
         </div>
+
+        <div class="category-section">
+            <div class="section-title">
+                <i class="fa-solid fa-industry" style="color: var(--nucleaire);"></i>
+                Risques Technologiques
+            </div>
+
+            <div class="grid-container">
+                <div class="card" onclick="goToMap(['industriel', 'nucleaire'])" style="--accent: var(--grp-techno)">
+                    <div class="card-icon" style="background-color: var(--grp-techno);">
+                        <i class="fa-solid fa-radiation"></i>
+                    </div>
+                    <h3>Industrie & Nucléaire</h3>
+                    <p>Risques liés aux activités humaines industrielles, sites Seveso et installations nucléaires.</p>
+                    <div class="sub-risks">
+                        <span class="tag" style="color:var(--nucleaire)">Nucléaire</span>
+                        <span class="tag" style="color:var(--industriel)">Indus. Seveso</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </section>
 
     <section id="view-map" class="view-section">
         <aside class="sidebar">
-            <h3 style="margin-top:0">Couches</h3>
-            
-            <button class="risk-btn" id="btn-inondation" onclick="afficherCouche('inondation', '#3A6EA5')">
-                <div class="dot" style="background: var(--inondation);"></div> Inondations
-            </button>
-            <button class="risk-btn" id="btn-seisme" onclick="afficherCouche('seisme', '#B23A48')">
-                <div class="dot" style="background: var(--seisme);"></div> Risque Sismique
-            </button>
-            <button class="risk-btn" id="btn-mouvement" onclick="afficherCouche('mouvement', '#8C6A43')">
-                <div class="dot" style="background: var(--mouvement);"></div> Mouvements terrain
-            </button>
-            <button class="risk-btn" id="btn-industriel" onclick="afficherCouche('industriel', '#6B8E23')">
-                <div class="dot" style="background: var(--industriel);"></div> Industriel
-            </button>
-            <button class="risk-btn" id="btn-nucleaire" onclick="afficherCouche('nucleaire', '#5A5A5A')">
-                <div class="dot" style="background: var(--nucleaire);"></div> Nucléaire
-            </button>
-            <button class="risk-btn" id="btn-radon" onclick="afficherCouche('radon', '#6A4C93')">
-                <div class="dot" style="background: var(--radon);"></div> Radon
-            </button>
+            <h3>Contrôle des Couches</h3>
+            <p style="font-size:0.8rem; color:#666; margin-bottom:20px;">Cochez les risques à afficher sur la carte.</p>
 
-            <div style="margin-top: auto; padding: 10px; background: #f0f8ff; border-radius: 5px; font-size: 0.85rem;">
-                <strong>Info:</strong> Cliquez sur les boutons pour charger les données.
+            <div class="sidebar-group-title">Naturel - Eau</div>
+            <div class="risk-toggle" id="btn-inondation" onclick="toggleLayer('inondation', '#3A6EA5')">
+                <div class="chk-box"><i class="fa-solid fa-check" style="font-size:10px"></i></div> Inondations
             </div>
+
+            <div class="sidebar-group-title">Naturel - Terre</div>
+            <div class="risk-toggle" id="btn-seisme" onclick="toggleLayer('seisme', '#B23A48')">
+                <div class="chk-box"><i class="fa-solid fa-check" style="font-size:10px"></i></div> Séismes
+            </div>
+            <div class="risk-toggle" id="btn-mouvement" onclick="toggleLayer('mouvement', '#8C6A43')">
+                <div class="chk-box"><i class="fa-solid fa-check" style="font-size:10px"></i></div> Mouvements Terrain
+            </div>
+            <div class="risk-toggle" id="btn-radon" onclick="toggleLayer('radon', '#6A4C93')">
+                <div class="chk-box"><i class="fa-solid fa-check" style="font-size:10px"></i></div> Radon
+            </div>
+
+            <div class="sidebar-group-title">Technologique</div>
+            <div class="risk-toggle" id="btn-nucleaire" onclick="toggleLayer('nucleaire', '#5A5A5A')">
+                <div class="chk-box"><i class="fa-solid fa-check" style="font-size:10px"></i></div> Nucléaire
+            </div>
+            <div class="risk-toggle" id="btn-industriel" onclick="toggleLayer('industriel', '#6B8E23')">
+                <div class="chk-box"><i class="fa-solid fa-check" style="font-size:10px"></i></div> Industriel (Seveso)
+            </div>
+
+            <button onclick="resetMap()" style="margin-top:auto; padding:10px; border:1px solid #ddd; background:white; cursor:pointer; border-radius:5px;">
+                Tout effacer
+            </button>
         </aside>
 
         <div id="map"></div>
@@ -276,64 +271,113 @@
             attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(map);
 
-        var currentLayer = null;
+        // Stockage des couches actives : Objet { 'id': layerGroup }
+        var activeLayers = {};
 
-        // --- 2. FONCTIONS DE NAVIGATION (ONGLETS) ---
+        // Données fictives pour la démo (coordonnées)
+        const dbData = {
+            'inondation': [[48.85, 2.35], [44.83, -0.57], [47.21, -1.55]],
+            'seisme': [[43.71, 7.26], [42.69, 2.89], [45.18, 5.72]],
+            'mouvement': [[45.76, 4.83], [45.04, 3.88]],
+            'radon': [[48.11, -1.67], [45.83, 1.26]],
+            'nucleaire': [[47.22, 0.17], [49.63, 1.62], [44.33, 4.75]],
+            'industriel': [[49.44, 1.09], [43.49, 5.37], [50.62, 3.05]]
+        };
+
+        // --- 2. NAVIGATION ---
         function switchView(viewName) {
-            // Cacher toutes les vues
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active-tab'));
 
-            // Afficher la bonne vue
             if(viewName === 'grid') {
                 document.getElementById('view-grid').classList.add('visible');
                 document.querySelectorAll('.nav-btn')[0].classList.add('active-tab');
             } else {
                 document.getElementById('view-map').classList.add('visible');
                 document.querySelectorAll('.nav-btn')[1].classList.add('active-tab');
-                map.invalidateSize(); // Important pour que la carte s'affiche bien quand on change d'onglet
+                map.invalidateSize();
             }
         }
 
-        // --- 3. FONCTION LIEN ENTRE GRILLE ET CARTE ---
-        function goToMap(type, color, name) {
-            switchView('map'); // On va sur l'onglet carte
-            afficherCouche(type, color); // On active la couche
-        }
-
-        // --- 4. LOGIQUE CARTE ---
-        function afficherCouche(type, color) {
-            // Gestion boutons actifs
-            document.querySelectorAll('.risk-btn').forEach(b => {
-                b.style.background = '#f9f9f9';
-                b.style.color = '#555';
-            });
-            const btn = document.getElementById('btn-' + type);
-            if(btn) {
-                btn.style.background = color + '20'; // Couleur très claire (transparence)
-                btn.style.color = color;
-                btn.style.fontWeight = 'bold';
-            }
-
-            // Nettoyage ancienne couche
-            if (currentLayer) map.removeLayer(currentLayer);
-
-            // Simulation de données (Cercles)
-            var coords = [];
-            if(type === 'inondation') coords = [[48.85, 2.35], [44.83, -0.57]]; // Paris, Bordeaux
-            else if(type === 'seisme') coords = [[43.71, 7.26], [42.69, 2.89]]; // Nice, Perpignan
-            else if(type === 'nucleaire') coords = [[47.22, 0.17], [49.63, 1.62]]; // Chinon, Penly
-            else coords = [[45.76, 4.83]]; // Lyon par defaut
-
-            var layerGroup = L.layerGroup();
-            coords.forEach(c => {
-                L.circle(c, {
-                    color: color, fillColor: color, fillOpacity: 0.6, radius: 40000
-                }).bindPopup("Zone à risque: " + type).addTo(layerGroup);
-            });
+        // --- 3. LOGIQUE HIERARCHIQUE ---
+        // Cette fonction accepte une LISTE de risques (ex: ['industriel', 'nucleaire'])
+        function goToMap(riskList) {
+            switchView('map');
+            resetMap(); // On nettoie la carte avant d'afficher le groupe
             
-            currentLayer = layerGroup;
-            currentLayer.addTo(map);
+            // On active chaque risque de la liste
+            riskList.forEach(riskId => {
+                // On récupère la couleur depuis le CSS ou on met une par défaut
+                let color = '#333';
+                if(riskId === 'inondation') color = '#3A6EA5';
+                if(riskId === 'seisme') color = '#B23A48';
+                if(riskId === 'mouvement') color = '#8C6A43';
+                if(riskId === 'radon') color = '#6A4C93';
+                if(riskId === 'nucleaire') color = '#5A5A5A';
+                if(riskId === 'industriel') color = '#6B8E23';
+
+                toggleLayer(riskId, color, true); // true = force activation
+            });
+        }
+
+        function resetMap() {
+            // Supprimer toutes les couches de la carte
+            for (let key in activeLayers) {
+                map.removeLayer(activeLayers[key]);
+                // Désactiver le style du bouton
+                const btn = document.getElementById('btn-' + key);
+                if(btn) {
+                    btn.classList.remove('active');
+                    btn.querySelector('.chk-box').style.backgroundColor = 'transparent';
+                    btn.querySelector('.chk-box').style.borderColor = '#ddd';
+                }
+            }
+            activeLayers = {};
+        }
+
+        // --- 4. GESTION DES COUCHES (ON/OFF) ---
+        function toggleLayer(type, color, forceState = null) {
+            const btn = document.getElementById('btn-' + type);
+            const checkbox = btn.querySelector('.chk-box');
+            
+            // Est-ce que la couche est déjà là ?
+            let isActive = activeLayers[type] !== undefined;
+            
+            // Si on force l'état (depuis la grille)
+            if (forceState === true && isActive) return; // Déjà là, on ne fait rien
+            if (forceState === false && !isActive) return;
+
+            // Bascule
+            if (isActive) {
+                // SUPPRESSION
+                map.removeLayer(activeLayers[type]);
+                delete activeLayers[type];
+                
+                // Style UI
+                btn.classList.remove('active');
+                checkbox.style.backgroundColor = 'transparent';
+                checkbox.style.borderColor = '#ddd';
+                
+            } else {
+                // AJOUT
+                var layerGroup = L.layerGroup();
+                const points = dbData[type] || []; // Récupère les points
+                
+                points.forEach(c => {
+                    L.circleMarker(c, {
+                        color: 'white', weight: 1,
+                        fillColor: color, fillOpacity: 0.8, radius: 8 // Points pleins plus jolis
+                    }).bindPopup(`<b>${type.toUpperCase()}</b><br>Zone à risque détectée`).addTo(layerGroup);
+                });
+                
+                layerGroup.addTo(map);
+                activeLayers[type] = layerGroup;
+
+                // Style UI
+                btn.classList.add('active');
+                checkbox.style.backgroundColor = color;
+                checkbox.style.borderColor = color;
+            }
         }
     </script>
 
