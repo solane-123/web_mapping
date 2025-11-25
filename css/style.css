@@ -1,13 +1,17 @@
-/* --- CONFIGURATION --- */
+/* --- 1. CONFIGURATION DA STRICTE --- */
 :root {
+    /* Couleurs Risques */
     --inondation: #3A6EA5;
     --seisme: #B23A48;
     --mouvement: #8C6A43;
     --nucleaire: #5A5A5A;
     --industriel: #6B8E23;
     --radon: #6A4C93;
-    --bg-naturel: #eef4fa;
-    --bg-techno: #e8e8e8;
+
+    /* Ambiances */
+    --bg-naturel: #eef4fa; /* Fond bleuté très léger pour mode naturel */
+    --bg-techno: #f0f0f0;  /* Fond gris pour mode technique */
+    
     --text-color: #333;
 }
 
@@ -23,8 +27,7 @@ header {
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     display: flex; align-items: center; justify-content: space-between; z-index: 1000;
 }
-.header-logo { height: 50px; width: auto; margin-right: 15px; }
-.logo-area { display: flex; align-items: center; font-weight: 700; font-size: 1.3rem; color: #2c3e50; }
+.logo-area { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.3rem; color: #2c3e50; }
 
 .nav-tabs { display: flex; gap: 15px; height: 100%; }
 .nav-btn {
@@ -35,65 +38,83 @@ header {
 .nav-btn:hover { background: #f9f9f9; }
 .nav-btn.active-tab { color: var(--inondation); border-bottom: 3px solid var(--inondation); font-weight: bold; }
 
-/* --- VUES --- */
+/* --- GESTION DES VUES --- */
 .view-section { display: none; flex: 1; height: calc(100vh - 65px); overflow: hidden; }
 .view-section.visible { display: flex; }
 
-/* --- ACCUEIL --- */
+/* --- VUE ACCUEIL (GRILLE) --- */
 #view-grid { padding: 40px; overflow-y: auto; flex-direction: column; align-items: center; background: white; }
-.shortcut-container { width: 100%; max-width: 1000px; }
-.big-map-btn {
-    width: 100%; padding: 20px; margin-bottom: 10px; border-radius: 10px; border: none; cursor: pointer; color: white;
-    font-size: 1.1rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s;
+.section-title { width: 100%; max-width: 1000px; font-size: 1.5rem; color: #2c3e50; margin: 40px 0 20px 0; border-left: 5px solid #ccc; padding-left: 15px; display: flex; align-items: center; gap: 10px; }
+.grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; width: 100%; max-width: 1000px; }
+
+.card {
+    background: white; border-radius: 12px; padding: 30px; text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease; border: 1px solid #eee;
 }
-.big-map-btn:hover { transform: scale(1.01); }
-.btn-naturel { background: linear-gradient(to right, #3A6EA5, #8C6A43); }
-.btn-techno { background: linear-gradient(to right, #5A5A5A, #6B8E23); }
-
-.section-title { width: 100%; max-width: 1000px; font-size: 1.5rem; color: #2c3e50; margin: 40px 0 20px 0; border-left: 5px solid #ccc; padding-left: 15px; }
-.nat-border { border-color: var(--inondation); }
-.tech-border { border-color: var(--nucleaire); }
-
-.grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; width: 100%; max-width: 1000px; }
-.card { background: white; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s; border: 1px solid #eee; }
 .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
 .card-icon { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
 
-/* Classes couleurs */
-.bg-inondation { background-color: var(--inondation); }
-.bg-seisme { background-color: var(--seisme); }
-.bg-mouvement { background-color: var(--mouvement); }
-.bg-industriel { background-color: var(--industriel); }
-.bg-nucleaire { background-color: var(--nucleaire); }
+/* Boutons d'accès rapide aux cartes globales */
+.big-map-btn {
+    width: 100%; max-width: 1000px; padding: 20px; margin-bottom: 10px;
+    border-radius: 10px; border: none; cursor: pointer; color: white;
+    font-size: 1.1rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+    transition: transform 0.2s;
+}
+.big-map-btn:hover { transform: scale(1.01); }
 
-/* --- CARTE --- */
+/* --- VUE CARTE (COMMUNE MAIS ADAPTATIVE) --- */
 #view-map { flex-direction: row; position: relative; }
-.sidebar-controls { width: 280px; background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500; display: flex; flex-direction: column; }
-.sidebar-header { font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
-.btn-reset { margin-top: auto; padding: 10px; cursor: pointer; background: #fff; border: 1px solid #ddd; }
 
-.risk-toggle { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; color: #444; }
+/* Sidebar gauche (Contrôles) */
+.sidebar-controls {
+    width: 280px; background: white; padding: 20px;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500;
+    display: flex; flex-direction: column;
+}
+.sidebar-header { font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+
+.risk-toggle {
+    display: flex; align-items: center; padding: 12px; margin-bottom: 8px;
+    border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; color: #444;
+}
 .risk-toggle:hover { background: #f5f5f5; }
 .chk-box { width: 18px; height: 18px; border: 2px solid #ddd; border-radius: 4px; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
 .risk-toggle.active .chk-box { border-color: transparent; color: white; }
 
-#map { flex: 1; height: 100%; }
-
-/* Panneau Info */
+/* Sidebar Droite (Explications Collapsible) */
 .info-panel {
-    position: absolute; right: 20px; top: 20px; bottom: 40px; width: 300px; background: white; border-radius: 12px;
-    box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column; transition: transform 0.3s ease;
+    position: absolute; right: 20px; top: 20px; bottom: 40px;
+    width: 300px; background: white; border-radius: 12px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000;
+    display: flex; flex-direction: column;
+    transition: transform 0.3s ease;
 }
-.info-panel.closed { transform: translateX(340px); }
-.info-header { padding: 15px 20px; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-radius: 12px 12px 0 0; }
-.info-content { padding: 20px; overflow-y: auto; line-height: 1.6; color: #555; font-size: 0.9rem; }
-.info-toggle-btn { position: absolute; right: 20px; top: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 999; display: none; align-items: center; justify-content: center; cursor: pointer; }
+
+.info-panel.closed { transform: translateX(340px); } /* Caché à droite */
+
+.info-header {
+    padding: 15px 20px; border-top-left-radius: 12px; border-top-right-radius: 12px;
+    color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
+}
+.info-content { padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #555; }
+
+/* Bouton pour réouvrir le panneau */
+.info-toggle-btn {
+    position: absolute; right: 20px; top: 20px;
+    width: 40px; height: 40px; background: white; border-radius: 50%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 999;
+    display: none; align-items: center; justify-content: center; cursor: pointer;
+    font-size: 1.2rem; color: #333;
+}
 .info-toggle-btn.visible { display: flex; }
 
-/* --- DETAIL & STATS --- */
+#map { flex: 1; height: 100%; transition: background-color 0.3s; }
+
+/* --- VUE DETAIL & STATS (Gardés du code précédent) --- */
 #view-detail { flex-direction: column; overflow-y: auto; background: white; }
-.detail-header { padding: 40px; color: white; }
-.back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; margin-bottom: 20px; }
+.detail-header { padding: 40px; color: white; position: relative; }
+.back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; margin-bottom: 20px; display: inline-block; }
 .timeline-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
 .timeline-item { position: relative; margin-bottom: 40px; padding-left: 30px; border-left: 2px solid #eee; }
 .timeline-year { font-weight: bold; background: #333; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
@@ -101,4 +122,3 @@ header {
 #view-stats { padding: 40px; background: #f4f6f8; overflow-y: auto; }
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
 .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-.chart-box { position: relative; height: 250px; width: 100%; }

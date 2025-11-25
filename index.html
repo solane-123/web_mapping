@@ -8,60 +8,64 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
     <header>
         <div class="logo-area">
-            <img src="logo/logo-site.jpg" alt="Logo" class="header-logo"> 
+            <i class="fa-solid fa-layer-group" style="color: var(--inondation);"></i>
             <span>Risques France</span>
         </div>
         <nav class="nav-tabs">
-            <button class="nav-btn active-tab" data-target="grid" onclick="app.switchView('grid', this)">Accueil</button>
-            <button class="nav-btn" onclick="app.openMap('naturel')">Carte Naturelle</button>
-            <button class="nav-btn" onclick="app.openMap('technique')">Carte Technique</button>
-            <button class="nav-btn" data-target="stats" onclick="app.switchView('stats', this)">Statistiques</button>
+            <button class="nav-btn active-tab" onclick="switchView('grid')">Accueil</button>
+            <button class="nav-btn" onclick="openMap('naturel')">Carte Naturelle</button>
+            <button class="nav-btn" onclick="openMap('technique')">Carte Technique</button>
+            <button class="nav-btn" onclick="switchView('stats')">Statistiques</button>
         </nav>
     </header>
 
     <section id="view-grid" class="view-section visible">
         
-        <div class="shortcut-container">
-            <button class="big-map-btn btn-naturel" onclick="app.openMap('naturel')">
-                <span><i class="fa-solid fa-leaf"></i> Accéder aux Risques Naturels</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-            <button class="big-map-btn btn-techno" onclick="app.openMap('technique')">
-                <span><i class="fa-solid fa-industry"></i> Accéder aux Risques Techniques</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
+        <button class="big-map-btn" style="background: linear-gradient(to right, #3A6EA5, #8C6A43);" onclick="openMap('naturel')">
+            <span><i class="fa-solid fa-leaf"></i> Accéder à la Carte des Risques Naturels</span>
+            <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        
+        <button class="big-map-btn" style="background: linear-gradient(to right, #5A5A5A, #6B8E23);" onclick="openMap('technique')">
+            <span><i class="fa-solid fa-industry"></i> Accéder à la Carte des Risques Techniques</span>
+            <i class="fa-solid fa-arrow-right"></i>
+        </button>
 
-        <div class="section-title nat-border">Dossiers Naturels</div>
+        <div class="section-title" style="border-color: var(--inondation);">Dossiers Naturels</div>
         <div class="grid-container">
-            <div class="card" onclick="app.openDetail('inondation')">
-                <div class="card-icon bg-inondation"><i class="fa-solid fa-water"></i></div>
+            <div class="card" onclick="openDetail('inondation')">
+                <div class="card-icon" style="background-color: var(--inondation);"><i class="fa-solid fa-water"></i></div>
                 <h3>Inondations</h3>
             </div>
-            <div class="card" onclick="app.openDetail('seisme')">
-                <div class="card-icon bg-seisme"><i class="fa-solid fa-house-crack"></i></div>
+            <div class="card" onclick="openDetail('seisme')">
+                <div class="card-icon" style="background-color: var(--seisme);"><i class="fa-solid fa-house-crack"></i></div>
                 <h3>Séismes</h3>
             </div>
-            <div class="card" onclick="app.openDetail('mouvement')">
-                <div class="card-icon bg-mouvement"><i class="fa-solid fa-hill-rockslide"></i></div>
+            <div class="card" onclick="openDetail('mouvement')">
+                <div class="card-icon" style="background-color: var(--mouvement);"><i class="fa-solid fa-hill-rockslide"></i></div>
                 <h3>Mouvements de Terrain</h3>
+            </div>
+            <div class="card" onclick="openDetail('radon')">
+                <div class="card-icon" style="background-color: var(--radon);"><i class="fa-solid fa-wind"></i></div>
+                <h3>Radon</h3>
             </div>
         </div>
 
-        <div class="section-title tech-border">Dossiers Techniques</div>
+        <div class="section-title" style="border-color: var(--nucleaire);">Dossiers Techniques</div>
         <div class="grid-container">
-            <div class="card" onclick="app.openDetail('industriel')">
-                <div class="card-icon bg-industriel"><i class="fa-solid fa-industry"></i></div>
+            <div class="card" onclick="openDetail('industriel')">
+                <div class="card-icon" style="background-color: var(--industriel);"><i class="fa-solid fa-industry"></i></div>
                 <h3>Industriel</h3>
             </div>
-            <div class="card" onclick="app.openDetail('nucleaire')">
-                <div class="card-icon bg-nucleaire"><i class="fa-solid fa-radiation"></i></div>
+            <div class="card" onclick="openDetail('nucleaire')">
+                <div class="card-icon" style="background-color: var(--nucleaire);"><i class="fa-solid fa-radiation"></i></div>
                 <h3>Nucléaire</h3>
             </div>
         </div>
@@ -70,22 +74,35 @@
     <section id="view-map" class="view-section">
         <aside class="sidebar-controls">
             <div id="map-title" class="sidebar-header">Carte</div>
-            <div id="controls-container"></div>
-            <button onclick="app.resetMap()" class="btn-reset">Tout masquer</button>
+            
+            <div id="group-naturel">
+                <div class="risk-toggle" id="btn-inondation" onclick="toggleLayer('inondation', '#3A6EA5')"><div class="chk-box"></div> Inondations</div>
+                <div class="risk-toggle" id="btn-seisme" onclick="toggleLayer('seisme', '#B23A48')"><div class="chk-box"></div> Séismes</div>
+                <div class="risk-toggle" id="btn-mouvement" onclick="toggleLayer('mouvement', '#8C6A43')"><div class="chk-box"></div> Mouvements</div>
+                <div class="risk-toggle" id="btn-radon" onclick="toggleLayer('radon', '#6A4C93')"><div class="chk-box"></div> Radon</div>
+            </div>
+
+            <div id="group-technique">
+                <div class="risk-toggle" id="btn-nucleaire" onclick="toggleLayer('nucleaire', '#5A5A5A')"><div class="chk-box"></div> Nucléaire</div>
+                <div class="risk-toggle" id="btn-industriel" onclick="toggleLayer('industriel', '#6B8E23')"><div class="chk-box"></div> Industriel</div>
+            </div>
+
+            <button onclick="resetMap()" style="margin-top:auto; padding:10px; cursor:pointer; background:#fff; border:1px solid #ddd;">Tout masquer</button>
         </aside>
 
         <div id="map"></div>
 
-        <div id="info-toggle" class="info-toggle-btn" onclick="app.toggleInfoPanel(true)">
+        <div id="info-toggle" class="info-toggle-btn" onclick="toggleInfoPanel(true)">
             <i class="fa-solid fa-info"></i>
         </div>
 
         <div id="info-panel" class="info-panel">
             <div id="info-header" class="info-header">
                 <span id="info-title-text">Information</span>
-                <i class="fa-solid fa-times" onclick="app.toggleInfoPanel(false)"></i>
+                <i class="fa-solid fa-times" style="cursor:pointer" onclick="toggleInfoPanel(false)"></i>
             </div>
-            <div id="info-content" class="info-content"></div>
+            <div id="info-content" class="info-content">
+            </div>
         </div>
     </section>
 
@@ -93,13 +110,14 @@
 
     <section id="view-stats" class="view-section">
         <div class="stats-grid">
-            <div class="stat-card"><h3>Crues (Mètres)</h3><div class="chart-box"><canvas id="chartCrues"></canvas></div></div>
-            <div class="stat-card"><h3>Nucléaire (INES)</h3><div class="chart-box"><canvas id="chartINES"></canvas></div></div>
+            <div class="stat-card"><h3>Crues</h3><canvas id="chartCrues"></canvas></div>
+            <div class="stat-card"><h3>Nucléaire (INES)</h3><canvas id="chartINES"></canvas></div>
         </div>
     </section>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/main.js"></script> 
+    
+    <script src="js/script.js"></script>
 </body>
 </html>
