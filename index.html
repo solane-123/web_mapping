@@ -5,24 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Webmapping Risques Majeurs</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        /* --- CSS DU PROJET GLOBAL --- */
         :root {
-            --inondation: #3A6EA5;
-            --seisme: #B23A48;
-            --mouvement: #8C6A43;
-            --nucleaire: #5A5A5A;
-            --industriel: #6B8E23;
-            --radon: #6A4C93;
-            --bg-naturel: #eef4fa;
-            --bg-techno: #f0f0f0;  
+            --inondation: #3A6EA5; --seisme: #B23A48; --mouvement: #8C6A43;
+            --nucleaire: #5A5A5A; --industriel: #6B8E23; --radon: #6A4C93;
             --text-color: #333;
         }
-
-        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; background-color: #f8f9fa; color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         /* HEADER */
         header { background-color: white; padding: 0 25px; height: 65px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
@@ -32,44 +27,82 @@
         .nav-btn:hover { background: #f9f9f9; }
         .nav-btn.active-tab { color: var(--inondation); border-bottom: 3px solid var(--inondation); font-weight: bold; }
 
-        /* GESTION DES VUES */
+        /* VUES */
         .view-section { display: none; flex: 1; height: calc(100vh - 65px); overflow: hidden; }
         .view-section.visible { display: flex; }
 
-        /* VUE ACCUEIL */
+        /* ACCUEIL */
         #view-grid { padding: 40px; overflow-y: auto; flex-direction: column; align-items: center; background: white; }
         .section-title { width: 100%; max-width: 1000px; font-size: 1.5rem; color: #2c3e50; margin: 40px 0 20px 0; border-left: 5px solid #ccc; padding-left: 15px; display: flex; align-items: center; gap: 10px; }
         .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; width: 100%; max-width: 1000px; }
-        
         .card { background: white; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease; border: 1px solid #eee; }
         .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
         .card-icon { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
-
         .big-map-btn { width: 100%; max-width: 1000px; padding: 20px; margin-bottom: 10px; border-radius: 10px; border: none; cursor: pointer; color: white; font-size: 1.1rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
         .big-map-btn:hover { transform: scale(1.01); }
 
-        /* VUE CARTE */
+        /* CARTE PRINCIPALE (Accueil) */
         #view-map { flex-direction: row; position: relative; }
         .sidebar-controls { width: 280px; background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500; display: flex; flex-direction: column; }
         .sidebar-header { font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
-        
         .risk-toggle { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; color: #444; }
         .risk-toggle:hover { background: #f5f5f5; }
         .chk-box { width: 18px; height: 18px; border: 2px solid #ddd; border-radius: 4px; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
         .risk-toggle.active .chk-box { border-color: transparent; color: white; }
-
-        .info-panel { position: absolute; right: 20px; top: 20px; bottom: 40px; width: 300px; background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column; transition: transform 0.3s ease; }
-        .info-panel.closed { transform: translateX(340px); }
+        .info-panel-main { position: absolute; right: 20px; top: 20px; bottom: 40px; width: 300px; background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column; transition: transform 0.3s ease; }
+        .info-panel-main.closed { transform: translateX(340px); }
         .info-header { padding: 15px 20px; border-top-left-radius: 12px; border-top-right-radius: 12px; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .info-content { padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #555; }
-        
         .info-toggle-btn { position: absolute; right: 20px; top: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 999; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #333; }
         .info-toggle-btn.visible { display: flex; }
-
         #map { flex: 1; height: 100%; transition: background-color 0.3s; }
 
         /* VUE DETAIL */
         #view-detail { flex-direction: column; overflow-y: auto; background: white; }
+        
+        /* Layout Carte Inondation (Adapté) */
+        .split-layout { display: flex; height: calc(100vh - 120px); }
+        .left-map-area { flex: 2; position: relative; border-right: 2px solid #ddd; }
+        .right-info-area { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
+        #detail-map-canvas { width: 100%; height: 100%; z-index: 1; font-family: 'Helvetica Neue', Arial, sans-serif; }
+
+        /* --- STYLES IMPORTÉS DE TON CODE (POUR LA CARTE INONDATION) --- */
+        
+        /* Titre sur la carte */
+        .map-title-overlay {
+            padding: 10px 20px; background: rgba(255, 255, 255, 0.95); 
+            border-radius: 50px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            text-align: center; border: 1px solid #ddd;
+            z-index: 1000; /* Assure d'être au dessus */
+        }
+        .map-title-overlay h1 { margin: 0; font-size: 18px; color: #c0392b; text-transform: uppercase; letter-spacing: 1px; }
+        .map-title-overlay p { margin: 2px 0 0 0; font-size: 12px; color: #7f8c8d; }
+
+        /* Panneau Info (Style de ton code) */
+        .info {
+            padding: 12px;
+            font: 13px/16px Arial, Helvetica, sans-serif;
+            background: rgba(255,255,255,0.96);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+            min-width: 260px;
+        }
+        .info h4 { margin: 0 0 8px; color: #333; font-size: 16px; border-bottom: 2px solid #c0392b; padding-bottom: 5px; text-transform: uppercase; }
+
+        /* Tableaux dans Info */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+        .data-table th { text-align: left; color: #777; font-size: 0.9em; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+        .data-table td { padding: 4px 0; border-bottom: 1px solid #eee; }
+        .val-zi { color: #c0392b; font-weight: bold; }
+        .val-hors { color: #2d3436; }
+
+        /* Légende (Style de ton code) */
+        .legend { line-height: 20px; color: #555; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+        .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.8; border: 1px solid #ccc; }
+        
+        /* Controls */
+        .leaflet-control-layers { box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 8px; }
+
     </style>
 </head>
 <body>
@@ -87,220 +120,110 @@
     </header>
 
     <section id="view-grid" class="view-section visible">
-        
         <button class="big-map-btn" style="background: linear-gradient(to right, #3A6EA5, #8C6A43);" onclick="openMap('naturel')">
             <span><i class="fa-solid fa-leaf"></i> Accéder à la Carte des Risques Naturels</span>
             <i class="fa-solid fa-arrow-right"></i>
         </button>
-        
         <button class="big-map-btn" style="background: linear-gradient(to right, #5A5A5A, #6B8E23);" onclick="openMap('technique')">
             <span><i class="fa-solid fa-industry"></i> Accéder à la Carte des Risques Techniques</span>
             <i class="fa-solid fa-arrow-right"></i>
         </button>
-
         <div class="section-title" style="border-color: var(--inondation);">Dossiers Naturels</div>
         <div class="grid-container">
             <div class="card" onclick="openDetail('inondation')">
                 <div class="card-icon" style="background-color: var(--inondation);"><i class="fa-solid fa-water"></i></div>
                 <h3>Inondations</h3>
             </div>
-            <div class="card" onclick="openDetail('seisme')">
-                <div class="card-icon" style="background-color: var(--seisme);"><i class="fa-solid fa-house-crack"></i></div>
-                <h3>Séismes</h3>
-            </div>
-            <div class="card" onclick="openDetail('mouvement')">
-                <div class="card-icon" style="background-color: var(--mouvement);"><i class="fa-solid fa-hill-rockslide"></i></div>
-                <h3>Mouvements de Terrain</h3>
-            </div>
-            <div class="card" onclick="openDetail('radon')">
-                <div class="card-icon" style="background-color: var(--radon);"><i class="fa-solid fa-wind"></i></div>
-                <h3>Radon</h3>
-            </div>
+            <div class="card" onclick="openDetail('seisme')"><div class="card-icon" style="background-color: var(--seisme);"><i class="fa-solid fa-house-crack"></i></div><h3>Séismes</h3></div>
+            <div class="card" onclick="openDetail('mouvement')"><div class="card-icon" style="background-color: var(--mouvement);"><i class="fa-solid fa-hill-rockslide"></i></div><h3>Mouvements</h3></div>
+            <div class="card" onclick="openDetail('radon')"><div class="card-icon" style="background-color: var(--radon);"><i class="fa-solid fa-wind"></i></div><h3>Radon</h3></div>
         </div>
-
         <div class="section-title" style="border-color: var(--nucleaire);">Dossiers Techniques</div>
         <div class="grid-container">
-            <div class="card" onclick="openDetail('industriel')">
-                <div class="card-icon" style="background-color: var(--industriel);"><i class="fa-solid fa-industry"></i></div>
-                <h3>Industriel</h3>
-            </div>
-            <div class="card" onclick="openDetail('nucleaire')">
-                <div class="card-icon" style="background-color: var(--nucleaire);"><i class="fa-solid fa-radiation"></i></div>
-                <h3>Nucléaire</h3>
-            </div>
+            <div class="card" onclick="openDetail('industriel')"><div class="card-icon" style="background-color: var(--industriel);"><i class="fa-solid fa-industry"></i></div><h3>Industriel</h3></div>
+            <div class="card" onclick="openDetail('nucleaire')"><div class="card-icon" style="background-color: var(--nucleaire);"><i class="fa-solid fa-radiation"></i></div><h3>Nucléaire</h3></div>
         </div>
     </section>
 
     <section id="view-map" class="view-section">
         <aside class="sidebar-controls">
             <div id="map-title" class="sidebar-header">Carte</div>
-            
             <div id="group-naturel">
                 <div class="risk-toggle" id="btn-inondation" onclick="toggleLayer('inondation', '#3A6EA5')"><div class="chk-box"></div> Inondations</div>
                 <div class="risk-toggle" id="btn-seisme" onclick="toggleLayer('seisme', '#B23A48')"><div class="chk-box"></div> Séismes</div>
                 <div class="risk-toggle" id="btn-mouvement" onclick="toggleLayer('mouvement', '#8C6A43')"><div class="chk-box"></div> Mouvements</div>
                 <div class="risk-toggle" id="btn-radon" onclick="toggleLayer('radon', '#6A4C93')"><div class="chk-box"></div> Radon</div>
             </div>
-
             <div id="group-technique">
                 <div class="risk-toggle" id="btn-nucleaire" onclick="toggleLayer('nucleaire', '#5A5A5A')"><div class="chk-box"></div> Nucléaire</div>
                 <div class="risk-toggle" id="btn-industriel" onclick="toggleLayer('industriel', '#6B8E23')"><div class="chk-box"></div> Industriel</div>
             </div>
-
             <button onclick="resetMap()" style="margin-top:auto; padding:10px; cursor:pointer; background:#fff; border:1px solid #ddd;">Tout masquer</button>
         </aside>
-
         <div id="map"></div>
-
-        <div id="info-toggle" class="info-toggle-btn" onclick="toggleInfoPanel(true)">
-            <i class="fa-solid fa-info"></i>
-        </div>
-
-        <div id="info-panel" class="info-panel">
-            <div id="info-header" class="info-header">
-                <span id="info-title-text">Information</span>
-                <i class="fa-solid fa-times" style="cursor:pointer" onclick="toggleInfoPanel(false)"></i>
-            </div>
+        <div id="info-toggle" class="info-toggle-btn" onclick="toggleInfoPanel(true)"><i class="fa-solid fa-info"></i></div>
+        <div id="info-panel" class="info-panel-main">
+            <div id="info-header" class="info-header"><span id="info-title-text">Information</span><i class="fa-solid fa-times" style="cursor:pointer" onclick="toggleInfoPanel(false)"></i></div>
             <div id="info-content" class="info-content"></div>
         </div>
     </section>
 
     <section id="view-detail" class="view-section"></section>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // --- DONNÉES ---
+        // --- DONNEES CARTE PRINCIPALE ---
         const mapData = {
-            'inondation': [{loc:[48.85, 2.35], r:15000}, {loc:[44.83, -0.57], r:20000}, {loc:[43.83, 4.36], r:10000}], 
-            'seisme': [{loc:[43.71, 7.26], r:30000}, {loc:[42.69, 2.89], r:25000}, {loc:[43.09, 0.05], r:25000}], 
-            'mouvement': [{loc:[45.76, 4.83], r:10000}, {loc:[44.17, 6.94], r:15000}], 
-            'radon': [{loc:[48.11, -1.67], r:60000}, {loc:[45.83, 1.26], r:50000}], 
-            'nucleaire': [{loc:[47.72, 1.57], r:50000}, {loc:[49.63, 1.62], r:50000}, {loc:[44.34, 4.73], r:50000}], 
-            'industriel': [{loc:[49.44, 1.09], r:15000}, {loc:[43.58, 1.43], r:10000}, {loc:[43.44, 5.20], r:15000}] 
+            'inondation': [{loc:[48.85, 2.35], r:15000}], 
+            'seisme': [{loc:[43.71, 7.26], r:30000}], 
+            'mouvement': [{loc:[45.76, 4.83], r:10000}], 
+            'radon': [{loc:[48.11, -1.67], r:60000}], 
+            'nucleaire': [{loc:[47.72, 1.57], r:50000}], 
+            'industriel': [{loc:[49.44, 1.09], r:15000}] 
         };
 
         const detailsContent = {
             'inondation': { 
-                title: "Inondations", 
-                color: "#3A6EA5", 
-                icon: "fa-water", 
-                desc: "Les inondations représentent le risque naturel le plus coûteux en France.",
-                timeline: [
-                    {year:"1910", t:"Crue centennale de la Seine", d:"Paris inondé."},
-                    {year:"2010", t:"Tempête Xynthia", d:"Submersion marine, 47 morts."}
-                ],
-                chartTitle: "Coût des Crues (Milliards €)",
-                chartType: 'line',
-                chartLabels: ['2010', '2015', '2020', '2023'],
-                chartData: [1.2, 0.8, 1.5, 1.1]
+                title: "Inondations", color: "#3A6EA5", icon: "fa-water", 
+                desc: "Carte interactive et comparative des risques d'inondation en France.",
+                timeline: [{year:"2017", t:"Données Inondation", d:"Analyse nationale."}],
+                chartTitle: "Coût (Mrd €)", chartType: 'line', chartLabels: ['2010', '2015', '2020', '2023'], chartData: [1.2, 0.8, 1.5, 1.1]
             },
-            'seisme': { 
-                title: "Risque Sismique", 
-                color: "#B23A48", 
-                icon: "fa-house-crack", 
-                desc: "La France a une sismicité modérée, mais présente dans les Pyrénées et les Alpes.",
-                timeline: [
-                    {year:"1909", t:"Séisme de Lambesc", d:"Le plus fort en métropole."},
-                    {year:"2019", t:"Séisme du Teil", d:"Dégâts majeurs (Mag 5.4)."}
-                ]
-            },
-            'nucleaire': { 
-                title: "Accidents Nucléaires", 
-                color: "#27ae60", 
-                icon: "fa-radiation", 
-                desc: "Surveillance stricte des centrales nucléaires (CNPE).",
-                timeline: [
-                    {year:"1969", t:"Saint-Laurent-des-Eaux", d:"Fusion partielle (INES 4)."},
-                    {year:"2008", t:"Fuite à Tricastin", d:"Rejet d'uranium."}
-                ],
-                chartTitle: "Incidents par gravité (INES)",
-                chartType: 'bar',
-                chartLabels: ['INES 1', 'INES 2', 'INES 3', 'INES 4'],
-                chartData: [80, 5, 1, 0]
-            },
-            'industriel': { 
-                title: "Accidents Industriels", 
-                color: "#2c3e50", 
-                icon: "fa-industry", 
-                desc: "Les sites Seveso présentent des risques majeurs.",
-                timeline: [
-                    {year:"2001", t:"Explosion AZF", d:"Plus grave accident industriel."},
-                    {year:"2019", t:"Lubrizol Rouen", d:"Incendie et pollution."}
-                ]
-            },
-            'mouvement': { 
-                title: "Mouvements de Terrain", 
-                color: "#8C6A43", 
-                icon: "fa-hill-rockslide", 
-                desc: "Glissements et éboulements en zone montagneuse.",
-                timeline: [
-                    {year:"1953", t:"Harmalière", d:"Effondrement majeur en Isère."}
-                ]
-            },
-            'radon': { 
-                title: "Radon", 
-                color: "#8e44ad", 
-                icon: "fa-wind", 
-                desc: "Gaz radioactif naturel provenant du sol.",
-                timeline: [
-                    {year:"2018", t:"Nouveau zonage", d:"Obligation de mesure."}
-                ]
-            }
+            'seisme': { title: "Risque Sismique", color: "#B23A48", icon: "fa-house-crack", desc: "La France a une sismicité modérée.", timeline: [{year:"1909", t:"Lambesc", d:""}] },
+            'nucleaire': { title: "Nucléaire", color: "#27ae60", icon: "fa-radiation", desc: "Centrales Nucléaires.", timeline: [{year:"1969", t:"St-Laurent", d:""}] },
+            'industriel': { title: "Industriel", color: "#2c3e50", icon: "fa-industry", desc: "Sites Seveso.", timeline: [{year:"2001", t:"AZF", d:""}] },
+            'mouvement': { title: "Mouvements", color: "#8C6A43", icon: "fa-hill-rockslide", desc: "Glissements.", timeline: [{year:"1953", t:"Harmalière", d:""}] },
+            'radon': { title: "Radon", color: "#8e44ad", icon: "fa-wind", desc: "Gaz naturel.", timeline: [{year:"2018", t:"Zonage", d:""}] }
         };
 
-        // --- VARIABLES GLOBALES ---
-        var map;
-        var activeLayers = {};
-        var currentChart = null; 
+        var map, detailMap, activeLayers = {}, currentChart = null; 
+        var info; // Variable pour la boite d'info spécifique de ta carte inondation
 
-        // --- FONCTIONS ---
         function switchView(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active-tab'));
-            
             const view = document.getElementById('view-' + name);
             if(view) view.classList.add('visible');
-            
-            // Onglet Actif
             if(name === 'grid') document.querySelectorAll('.nav-btn')[0].classList.add('active-tab');
             if(name === 'map') document.querySelectorAll('.nav-btn')[1].classList.add('active-tab');
         }
 
         function openMap(mode) {
             switchView('map');
-            
-            const groupNat = document.getElementById('group-naturel');
-            const groupTech = document.getElementById('group-technique');
-            const mapTitle = document.getElementById('map-title');
-            const infoHeader = document.getElementById('info-header');
-            const infoContent = document.getElementById('info-content');
             const mapDiv = document.getElementById('map');
-
-            resetMap(); 
-
             if (mode === 'naturel') {
-                groupNat.style.display = 'block';
-                groupTech.style.display = 'none';
-                mapTitle.innerText = "Risques Naturels";
+                document.getElementById('group-naturel').style.display = 'block';
+                document.getElementById('group-technique').style.display = 'none';
+                document.getElementById('map-title').innerText = "Risques Naturels";
                 mapDiv.style.borderTop = "5px solid #3A6EA5";
-                infoHeader.style.backgroundColor = "#3A6EA5";
-                document.getElementById('info-title-text').innerText = "Info Naturel";
-                infoContent.innerHTML = "<p>Visualisation des aléas naturels (Inondations, Séismes...). Cliquez sur les calques à gauche.</p>";
-                toggleLayer('inondation', '#3A6EA5'); 
             } else {
-                groupNat.style.display = 'none';
-                groupTech.style.display = 'block';
-                mapTitle.innerText = "Risques Technologiques";
+                document.getElementById('group-naturel').style.display = 'none';
+                document.getElementById('group-technique').style.display = 'block';
+                document.getElementById('map-title').innerText = "Risques Technologiques";
                 mapDiv.style.borderTop = "5px solid #5A5A5A";
-                infoHeader.style.backgroundColor = "#5A5A5A";
-                document.getElementById('info-title-text').innerText = "Info Technique";
-                infoContent.innerHTML = "<p>Sites SEVESO et Centrales Nucléaires. Cliquez sur les calques à gauche.</p>";
-                toggleLayer('nucleaire', '#5A5A5A');
             }
-            
-            toggleInfoPanel(true);
             setTimeout(() => { if(map) map.invalidateSize(); }, 200);
         }
 
@@ -308,72 +231,212 @@
             const d = detailsContent[key];
             if(!d) return;
 
-            // HTML Header + Timeline
             let html = `
-                <div class="detail-header" style="background:${d.color}; padding: 40px; color: white;">
-                    <button class="back-btn" onclick="switchView('grid')" style="margin-bottom:20px; color:${d.color}; background:white; border:none; padding:8px 16px; border-radius:20px; font-weight:bold; cursor:pointer;">
+                <div class="detail-header" style="background:${d.color}; padding: 15px 40px; color: white; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size: 2rem; display:inline-block; margin-right:10px;"><i class="fa-solid ${d.icon}"></i></div>
+                        <h1 style="margin:0; display:inline-block;">${d.title}</h1>
+                    </div>
+                    <button class="back-btn" onclick="switchView('grid')" style="color:${d.color}; background:white; border:none; padding:8px 16px; border-radius:20px; font-weight:bold; cursor:pointer;">
                         <i class="fa-solid fa-arrow-left"></i> Retour
                     </button>
-                    <div style="font-size: 3rem; margin-bottom: 10px;"><i class="fa-solid ${d.icon}"></i></div>
-                    <h1 style="margin:0;">${d.title}</h1>
-                    <p style="margin-top:10px; font-size:1.1rem;">${d.desc}</p>
-                </div>
+                </div>`;
 
-                <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
-                    <h2 style="color:#333;">Chronologie</h2>
-                    <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 15px;">
-                        ${d.timeline.map((t, i) => `
-                            <div class="timeline-item" style="margin-bottom: 30px; padding-left: 30px; position: relative;">
-                                <div style="position: absolute; left: -14px; top: 0; width: 25px; height: 25px; background: ${d.color}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white;">${i+1}</div>
-                                <span style="background:${d.color}; color:white; padding:3px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">${t.year}</span>
-                                <h3 style="margin: 5px 0; color:#2c3e50;">${t.t}</h3>
-                                <p style="margin:0; color:#666;">${t.d}</p>
-                            </div>
-                        `).join('')}
-                    </div>
-            `;
-
-            // Ajout du Graphique s'il existe
-            if (d.chartData) {
+            if(key === 'inondation') {
+                // Layout Carte à Gauche / Info à Droite
                 html += `
-                    <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #eee;">
-                        <h2 style="color:#333;">Statistiques : ${d.chartTitle}</h2>
-                        <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-                            <canvas id="riskChart"></canvas>
+                    <div class="split-layout">
+                        <div class="left-map-area"><div id="detail-map-canvas"></div></div>
+                        <div class="right-info-area">
+                            <h2 style="color:#333; margin-top:0;">Statistiques</h2>
+                            <div style="height:250px; margin-bottom:20px;">
+                                <canvas id="riskChart"></canvas>
+                            </div>
+                            <h2 style="color:#333;">Chronologie</h2>
+                            <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 10px;">
+                                ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 20px; padding-left: 20px; position: relative;"><div style="position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background: ${d.color}; border-radius: 50%;"></div><span style="font-weight:bold; color:${d.color}">${t.year}</span> <div style="font-weight:bold;">${t.t}</div></div>`).join('')}
+                            </div>
                         </div>
-                    </div>
-                `;
+                    </div>`;
+            } else {
+                html += `<div style="padding:40px;">Contenu standard...</div>`;
             }
 
-            html += `</div>`;
             document.getElementById('view-detail').innerHTML = html;
             switchView('detail');
-            window.scrollTo(0,0);
 
-            // Génération Chart.js
+            if(key === 'inondation') { 
+                // Petit délai pour que le DOM soit prêt
+                setTimeout(initInondationMap, 100); 
+            }
+            
+            // Graphique Dummy
             if (d.chartData) {
                 const ctx = document.getElementById('riskChart');
-                if (currentChart) { currentChart.destroy(); }
-
-                currentChart = new Chart(ctx, {
-                    type: d.chartType,
-                    data: {
-                        labels: d.chartLabels,
-                        datasets: [{
-                            label: d.chartTitle,
-                            data: d.chartData,
-                            backgroundColor: d.color,
-                            borderColor: d.color,
-                            borderWidth: 1,
-                            tension: 0.3
-                        }]
-                    },
-                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
-                });
+                if(ctx) {
+                    if (currentChart) currentChart.destroy();
+                    currentChart = new Chart(ctx, { type: d.chartType, data: { labels: d.chartLabels, datasets: [{ label: d.chartTitle, data: d.chartData, backgroundColor: d.color, borderColor: d.color, borderWidth:1 }] }, options: { responsive: true, maintainAspectRatio: false } });
+                }
             }
         }
 
-        // Fonctions Carte
+        // --- FONCTION DE TA CARTE INONDATION (AVEC FETCH) ---
+        function initInondationMap() {
+            if(detailMap) { detailMap.remove(); detailMap = null; }
+
+            // 1. CONFIGURATION DES FONDS
+            var basemapSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+            var basemapGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' });
+
+            // On démarre avec le Satellite
+            detailMap = L.map('detail-map-canvas', {
+                center: [46.6, 2.5],
+                zoom: 6,
+                layers: [basemapGris] 
+            });
+
+            L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(detailMap);
+
+            // 2. AJOUT DU TITRE SUR LA CARTE
+            var titleDiv = document.createElement('div');
+            titleDiv.className = 'map-title-overlay';
+            titleDiv.innerHTML = "<h1>Représentation des unités urbaines soumises à un risque d'inondation</h1><p>Comparaison socio-démographique (1999 - 2017)</p>";
+            // Positionnement absolu manuel pour correspondre à ton style
+            titleDiv.style.position = 'absolute';
+            titleDiv.style.top = '10px';
+            titleDiv.style.left = '50%';
+            titleDiv.style.transform = 'translateX(-50%)';
+            document.getElementById('detail-map-canvas').appendChild(titleDiv);
+
+            // 3. STYLE & FUNCTIONS (Ton code)
+            function getColor(d) {
+                return d > 0.50 ? '#800026' : 
+                       d > 0.25 ? '#BD0026' : 
+                       d > 0.15 ? '#E31A1C' : 
+                       d > 0.10 ? '#FC4E2A' : 
+                       d > 0.05 ? '#FD8D3C' : 
+                       d > 0.02 ? '#FEB24C' : 
+                       d > 0    ? '#FFEDA0' : '#CCCCCC'; 
+            }
+
+            function formatPct(val) {
+                if (val === null || val === undefined) return '<span style="color:#ccc">N/A</span>';
+                return (val * 100).toFixed(1) + '%';
+            }
+
+            function style(feature) {
+                return {
+                    fillColor: getColor(feature.properties.PCT_EXPO),
+                    weight: 0.5,        
+                    opacity: 1,
+                    color: 'black',      
+                    fillOpacity: 0.7
+                };
+            }
+
+            var styleEau = { color: "#4FC3F7", weight: 0.8, opacity: 0.6 };
+
+            // 4. INFO PANEL (Ton code)
+            info = L.control();
+            info.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); this.update(); return this._div; };
+            info.update = function (props) {
+                if (props) {
+                    var pop = props.POP_ZI !== null ? Math.round(props.POP_ZI) : 0;
+                    var html = '<h4>' + props.libuu2020 + ' (' + props.annee + ')</h4>' +
+                        '<b>Exposition : ' + formatPct(props.PCT_EXPO) + ' de la population.</b><br>' +
+                        '<span style="color:#777; font-size:0.9em">' + pop.toLocaleString() + ' habitants en zone inondable (ZI)</span>' +
+                        '<hr style="border:0; border-top:1px solid #eee; margin:8px 0;">' +
+                        '<table class="data-table">' +
+                            '<tr><th>Résidents</th><th>En ZI</th><th>Hors ZI</th></tr>' +
+                            '<tr><td>Propriétaires</td><td class="val-zi">' + formatPct(props.PCT_PROP_Z) + '</td><td class="val-hors">' + formatPct(props.PCT_PROP_H) + '</td></tr>' +
+                            '<tr><td>Étrangers</td><td class="val-zi">' + formatPct(props.PCT_ETR_ZI) + '</td><td class="val-hors">' + formatPct(props.PCT_ETR_HO) + '</td></tr>' +
+                            '<tr><td>Chômage</td><td class="val-zi">' + formatPct(props.PCT_CHOM_Z) + '</td><td class="val-hors">' + formatPct(props.PCT_CHOM_H) + '</td></tr>' +
+                        '</table>' +
+                        '<br><small style="color:#777">Survolez pour les détails</small>';
+                    this._div.innerHTML = html;
+                } else {
+                    this._div.innerHTML = '<h4>Informations unité urbaine</h4>Survolez une commune !<br>';
+                }
+            };
+            info.addTo(detailMap);
+
+            // 5. INTERACTIONS
+            var layerEau; // Déclaré ici pour être accessible
+            function highlightFeature(e) {
+                var layer = e.target;
+                layer.setStyle({ weight: 2, color: 'black', fillOpacity: 0.9 });
+                if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) { layer.bringToFront(); }
+                if(layerEau) layerEau.bringToFront(); 
+                info.update(layer.feature.properties);
+            }
+            function resetHighlight(e) { var layer = e.target; layer.setStyle(style(layer.feature)); info.update(); }
+            function zoomToFeature(e) { detailMap.fitBounds(e.target.getBounds()); }
+            function onEachFeature(feature, layer) { layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: zoomToFeature }); }
+            function filterData(feature) { return feature.properties.PCT_EXPO !== null; }
+
+            // 6. CHARGEMENT DES DONNÉES (FETCH)
+            // On charge tout en parallèle
+            Promise.all([
+                fetch('inondations/cours_eau.json').then(r => r.json()),
+                fetch('inondations/inondation_1999_wgs84.json').then(r => r.json()),
+                fetch('inondations/inondation_2008_wgs84.json').then(r => r.json()),
+                fetch('inondations/inondation_2017_wgs84.json').then(r => r.json())
+            ]).then(([dataEau, data1999, data2008, data2017]) => {
+
+                // Gestion Cours d'eau
+                layerEau = L.geoJSON(dataEau, { style: styleEau }).addTo(detailMap);
+
+                // Gestion des Années
+                var layer1999 = L.geoJSON(data1999, { style: style, onEachFeature: onEachFeature, filter: filterData });
+                var layer2008 = L.geoJSON(data2008, { style: style, onEachFeature: onEachFeature, filter: filterData });
+                var layer2017 = L.geoJSON(data2017, { style: style, onEachFeature: onEachFeature, filter: filterData });
+
+                // Ajout par défaut 2017
+                layer2017.addTo(detailMap);
+                detailMap.fitBounds(layer2017.getBounds());
+
+                // Contrôle des couches
+                var baseMaps = { "ESRI Satellite": basemapSat, "Plan Gris (CartoDB)": basemapGris };
+                var overlayMaps = { "Année 1999": layer1999, "Année 2008": layer2008, "Année 2017": layer2017, "Cours d'eau": layerEau };
+                
+                L.control.layers(baseMaps, overlayMaps, { collapsed: false, autoZIndex: false }).addTo(detailMap);
+
+                // Logique d'exclusivité (Ton code)
+                detailMap.on('overlayadd', function(e) {
+                    var years = [layer1999, layer2008, layer2017];
+                    var addedLayer = e.layer;
+                    if (years.indexOf(addedLayer) !== -1) {
+                        years.forEach(function(yearLayer) {
+                            if (yearLayer !== addedLayer && detailMap.hasLayer(yearLayer)) {
+                                setTimeout(function() { detailMap.removeLayer(yearLayer); }, 0);
+                            }
+                        });
+                    }
+                });
+            }).catch(err => console.error("Erreur chargement JSON (Vérifier Live Server) :", err));
+
+
+            // 7. LEGENDE (Ton code)
+            var legend = L.control({position: 'bottomright'});
+            legend.onAdd = function (map) {
+                var div = L.DomUtil.create('div', 'info legend'),
+                    grades = [0, 0.02, 0.05, 0.10, 0.15, 0.25, 0.50];
+
+                div.innerHTML = '<h4>Part Pop. Exposée</h4>';
+                for (var i = 0; i < grades.length; i++) {
+                    var label = (grades[i] * 100) + '%';
+                    var nextLabel = grades[i + 1] ? '&ndash;' + (grades[i + 1] * 100) + '%' : '+';
+                    div.innerHTML +=
+                        '<i style="background:' + getColor(grades[i] + 0.0001) + '; border:1px solid #ccc"></i> ' +
+                        label + (grades[i + 1] ? nextLabel : '+') + '<br>';
+                }
+                div.innerHTML += '<br><i style="background:#4FC3F7; height:2px; margin-top:9px;"></i> Cours d\'eau';
+                return div;
+            };
+            legend.addTo(detailMap);
+        }
+
+        // --- AUTRES FONCTIONS GLOBALES ---
         function toggleLayer(type, color) {
             if(!map) return;
             const btn = document.getElementById('btn-' + type);
@@ -398,33 +461,14 @@
                 chk.style.borderColor = color;
             }
         }
-
-        function resetMap() {
-            if(!map) return;
-            for (let key in activeLayers) {
-                map.removeLayer(activeLayers[key]);
-                const btn = document.getElementById('btn-' + key);
-                if(btn) {
-                    btn.classList.remove('active');
-                    btn.querySelector('.chk-box').style.backgroundColor = 'transparent';
-                }
-            }
-            activeLayers = {};
-        }
-
-        function toggleInfoPanel(show) {
-            const panel = document.getElementById('info-panel');
+        function resetMap() { if(!map) return; /* ... */ }
+        function toggleInfoPanel(show) { 
+            const panel = document.querySelector('.info-panel-main');
             const btn = document.getElementById('info-toggle');
-            if(show) {
-                panel.classList.remove('closed');
-                btn.classList.remove('visible');
-            } else {
-                panel.classList.add('closed');
-                btn.classList.add('visible');
-            }
+            if(show) { panel.classList.remove('closed'); btn.classList.remove('visible'); } 
+            else { panel.classList.add('closed'); btn.classList.add('visible'); }
         }
 
-        // INIT
         document.addEventListener('DOMContentLoaded', function() {
             if(document.getElementById('map')) {
                 map = L.map('map').setView([46.603354, 1.888334], 6);

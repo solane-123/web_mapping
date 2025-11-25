@@ -138,81 +138,155 @@ function openMap(mode) {
     toggleInfoPanel(true);
     setTimeout(() => { if(map) map.invalidateSize(); }, 200);
 }
-
+// --- REMPLACE TA FONCTION openDetail PAR CELLE-CI ---
 function openDetail(key) {
     const d = detailsContent[key];
     if(!d) return;
 
-    // 1. Construire le HTML de la page (En-tête + Frise)
+    // 1. On crée le Header (commun à toutes les pages)
     let html = `
-        <div class="detail-header" style="background:${d.color}; padding: 40px; color: white;">
-            <button class="back-btn" onclick="switchView('grid')" style="margin-bottom:20px; color:${d.color}; background:white; border:none; padding:8px 16px; border-radius:20px; font-weight:bold; cursor:pointer;">
+        <div class="detail-header" style="background:${d.color}; padding: 15px 40px; color: white; display:flex; justify-content:space-between; align-items:center;">
+            <div>
+                <div style="font-size: 2rem; display:inline-block; margin-right:10px;"><i class="fa-solid ${d.icon}"></i></div>
+                <h1 style="margin:0; display:inline-block;">${d.title}</h1>
+            </div>
+            <button class="back-btn" onclick="switchView('grid')" style="color:${d.color}; background:white; border:none; padding:8px 16px; border-radius:20px; font-weight:bold; cursor:pointer;">
                 <i class="fa-solid fa-arrow-left"></i> Retour
             </button>
-            <div style="font-size: 3rem; margin-bottom: 10px;"><i class="fa-solid ${d.icon}"></i></div>
-            <h1 style="margin:0;">${d.title}</h1>
-            <p style="margin-top:10px; font-size:1.1rem;">${d.desc}</p>
-        </div>
+        </div>`;
 
-        <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
-            <h2 style="color:#333;">Chronologie</h2>
-            <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 15px;">
-                ${d.timeline.map((t, i) => `
-                    <div class="timeline-item" style="margin-bottom: 30px; padding-left: 30px; position: relative;">
-                        <div style="position: absolute; left: -14px; top: 0; width: 25px; height: 25px; background: ${d.color}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white;">${i+1}</div>
-                        <span style="background:${d.color}; color:white; padding:3px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">${t.year}</span>
-                        <h3 style="margin: 5px 0; color:#2c3e50;">${t.t}</h3>
-                        <p style="margin:0; color:#666;">${t.d}</p>
-                    </div>
-                `).join('')}
-            </div>
-    `;
-
-    // 2. Ajouter la section Graphique SI des données existent pour ce risque
-    if (d.chartData) {
+    // 2. LOGIQUE : SI C'EST INONDATION, ON CHANGE L'AFFICHAGE
+    if(key === 'inondation') {
+        // --- LAYOUT SPECIAL AVEC CARTE A GAUCHE ---
         html += `
-            <div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #eee;">
-                <h2 style="color:#333;">Statistiques : ${d.chartTitle}</h2>
-                <div style="background:white; padding:20px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-                    <canvas id="riskChart"></canvas>
+            <div class="split-layout">
+                <div class="left-map-area"><div id="detail-map-canvas"></div></div>
+                <div class="right-info-area">
+                    <h2 style="color:#333; margin-top:0;">Statistiques</h2>
+                    <div style="height:250px; margin-bottom:20px;">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                    <h2 style="color:#333;">Chronologie</h2>
+                    <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 10px;">
+                        ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 20px; padding-left: 20px; position: relative;"><div style="position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background: ${d.color}; border-radius: 50%;"></div><span style="font-weight:bold; color:${d.color}">${t.year}</span> <div style="font-weight:bold;">${t.t}</div></div>`).join('')}
+                    </div>
                 </div>
-            </div>
-        `;
+            </div>`;
+    } else {
+        // --- LAYOUT STANDARD (POUR LES AUTRES RISQUES) ---
+        html += `
+            <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
+                <h2 style="color:#333;">Chronologie</h2>
+                <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 15px;">
+                    ${d.timeline.map((t, i) => `
+                        <div class="timeline-item" style="margin-bottom: 30px; padding-left: 30px; position: relative;">
+                            <div style="position: absolute; left: -14px; top: 0; width: 25px; height: 25px; background: ${d.color}; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white;">${i+1}</div>
+                            <span style="background:${d.color}; color:white; padding:3px 8px; border-radius:4px; font-size:0.85rem; font-weight:bold;">${t.year}</span>
+                            <h3 style="margin: 5px 0; color:#2c3e50;">${t.t}</h3>
+                            <p style="margin:0; color:#666;">${t.d}</p>
+                        </div>
+                    `).join('')}
+                </div>
+                ${d.chartData ? `<div style="margin-top: 50px; padding-top: 30px; border-top: 1px solid #eee;"><h2 style="color:#333;">Statistiques</h2><div style="background:white; padding:20px; border-radius:10px;"><canvas id="riskChart"></canvas></div></div>` : ''}
+            </div>`;
     }
 
-    html += `</div>`; // Fin du conteneur principal
-
-    // 3. Insérer le HTML
+    // 3. On injecte le HTML
     document.getElementById('view-detail').innerHTML = html;
     switchView('detail');
-    window.scrollTo(0,0);
 
-    // 4. Créer le graphique Chart.js si nécessaire
+    // 4. Si c'est inondation, on lance la carte spéciale
+    if(key === 'inondation') { 
+        setTimeout(initInondationMap, 100); // Petit délai pour que la div soit créée
+    }
+    
+    // 5. On crée le graphique si besoin
     if (d.chartData) {
         const ctx = document.getElementById('riskChart');
-        if (currentChart) { currentChart.destroy(); } // Détruire l'ancien graph s'il existe
-
-        currentChart = new Chart(ctx, {
-            type: d.chartType,
-            data: {
-                labels: d.chartLabels,
-                datasets: [{
-                    label: d.chartTitle,
-                    data: d.chartData,
-                    backgroundColor: d.color,
-                    borderColor: d.color,
-                    borderWidth: 1,
-                    tension: 0.3 // Courbe arrondie si c'est une ligne
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
+        if(ctx) {
+            if (currentChart) currentChart.destroy();
+            currentChart = new Chart(ctx, { type: d.chartType, data: { labels: d.chartLabels, datasets: [{ label: d.chartTitle, data: d.chartData, backgroundColor: d.color, borderColor: d.color, borderWidth:1 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        }
     }
+}
+
+// --- AJOUTE CETTE NOUVELLE FONCTION JUSTE APRES openDetail ---
+function initInondationMap() {
+    if(detailMap) { detailMap.remove(); detailMap = null; }
+
+    // Configuration Carte Inondation
+    var basemapSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+    var basemapGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' });
+
+    detailMap = L.map('detail-map-canvas', {
+        center: [46.6, 2.5],
+        zoom: 6,
+        layers: [basemapGris] 
+    });
+
+    L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(detailMap);
+
+    // Titre sur la carte
+    var titleDiv = document.createElement('div');
+    titleDiv.className = 'map-title-overlay';
+    titleDiv.innerHTML = "<h1>Unités urbaines et risque d'inondation</h1><p>Comparaison 1999 - 2017</p>";
+    titleDiv.style.position = 'absolute'; titleDiv.style.top = '10px'; titleDiv.style.left = '50%'; titleDiv.style.transform = 'translateX(-50%)';
+    document.getElementById('detail-map-canvas').appendChild(titleDiv);
+
+    // Fonctions internes pour le style
+    function getColor(d) { return d > 0.5 ? '#800026' : d > 0.25 ? '#BD0026' : d > 0.15 ? '#E31A1C' : d > 0.1 ? '#FC4E2A' : d > 0.05 ? '#FD8D3C' : d > 0.02 ? '#FEB24C' : d > 0 ? '#FFEDA0' : '#CCCCCC'; }
+    function style(feature) { return { fillColor: getColor(feature.properties.PCT_EXPO), weight: 0.5, opacity: 1, color: 'black', fillOpacity: 0.7 }; }
+    function formatPct(val) { if (val == null) return 'N/A'; return (val * 100).toFixed(1) + '%'; }
+    function filterData(feature) { return feature.properties.PCT_EXPO !== null; }
+
+    // Info Panel (survol)
+    var info = L.control();
+    info.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); this.update(); return this._div; };
+    info.update = function (props) {
+        this._div.innerHTML = props ? 
+            '<h4>' + props.libuu2020 + ' (' + props.annee + ')</h4><b>Exposition : ' + formatPct(props.PCT_EXPO) + '</b><br>Pop ZI: ' + Math.round(props.POP_ZI).toLocaleString() 
+            : '<h4>Unités Urbaines</h4>Survolez une zone';
+    };
+    info.addTo(detailMap);
+
+    // Interactions
+    function highlightFeature(e) { var l = e.target; l.setStyle({weight:2, color:'black', fillOpacity:0.9}); l.bringToFront(); info.update(l.feature.properties); }
+    function resetHighlight(e) { e.target.setStyle(style(e.target.feature)); info.update(); }
+    function onEach(feature, layer) { layer.on({ mouseover: highlightFeature, mouseout: resetHighlight }); }
+
+    // Chargement Fetch
+    Promise.all([
+        fetch('inondations/cours_eau.json').then(r => r.json()),
+        fetch('inondations/inondation_1999_wgs84.json').then(r => r.json()),
+        fetch('inondations/inondation_2008_wgs84.json').then(r => r.json()),
+        fetch('inondations/inondation_2017_wgs84.json').then(r => r.json())
+    ]).then(([dEau, d99, d08, d17]) => {
+        var lEau = L.geoJSON(dEau, {style:{color:'#4FC3F7', weight:1}}).addTo(detailMap);
+        var l99 = L.geoJSON(d99, {style:style, onEachFeature:onEach, filter:filterData});
+        var l08 = L.geoJSON(d08, {style:style, onEachFeature:onEach, filter:filterData});
+        var l17 = L.geoJSON(d17, {style:style, onEachFeature:onEach, filter:filterData}).addTo(detailMap);
+        
+        detailMap.fitBounds(l17.getBounds());
+
+        L.control.layers(
+            { "Satellite": basemapSat, "Plan": basemapGris },
+            { "1999": l99, "2008": l08, "2017": l17, "Eau": lEau },
+            { collapsed: false }
+        ).addTo(detailMap);
+        
+        // Légende
+        var legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info legend'), grades = [0, 0.02, 0.05, 0.1, 0.15, 0.25, 0.5];
+            div.innerHTML = '<h4>% Pop Exposée</h4>';
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML += '<i style="background:' + getColor(grades[i] + 0.001) + '; width:18px; height:18px; float:left; margin-right:8px; opacity:0.7"></i> ' + (grades[i]*100) + '%+<br>';
+            }
+            return div;
+        };
+        legend.addTo(detailMap);
+
+    }).catch(err => console.error("Erreur chargement (Live Server requis):", err));
 }
 
 // --- Fonctions Carte (inchangées mais nécessaires) ---
