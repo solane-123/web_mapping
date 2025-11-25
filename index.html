@@ -6,194 +6,62 @@
     <title>Webmapping Risques Majeurs</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-
-    <style>
-        /* --- 1. CONFIGURATION DA STRICTE --- */
-        :root {
-            /* Couleurs Risques */
-            --inondation: #3A6EA5;
-            --seisme: #B23A48;
-            --mouvement: #8C6A43;
-            --nucleaire: #5A5A5A;
-            --industriel: #6B8E23;
-            --radon: #6A4C93;
-
-            /* Ambiances */
-            --bg-naturel: #eef4fa; /* Fond bleuté très léger pour mode naturel */
-            --bg-techno: #f0f0f0;  /* Fond gris pour mode technique */
-            
-            --text-color: #333;
-        }
-
-        body {
-            font-family: 'Roboto', sans-serif; margin: 0; padding: 0;
-            background-color: #f8f9fa; color: var(--text-color);
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-        }
-
-        /* --- HEADER --- */
-        header {
-            background-color: white; padding: 0 25px; height: 65px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: flex; align-items: center; justify-content: space-between; z-index: 1000;
-        }
-        .logo-area { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.3rem; color: #2c3e50; }
-        
-        .nav-tabs { display: flex; gap: 15px; height: 100%; }
-        .nav-btn {
-            background: none; border: none; height: 100%; padding: 0 15px;
-            cursor: pointer; font-size: 0.95rem; color: #666; font-weight: 500;
-            border-bottom: 3px solid transparent; transition: all 0.3s;
-        }
-        .nav-btn:hover { background: #f9f9f9; }
-        .nav-btn.active-tab { color: var(--inondation); border-bottom: 3px solid var(--inondation); font-weight: bold; }
-
-        /* --- GESTION DES VUES --- */
-        .view-section { display: none; flex: 1; height: calc(100vh - 65px); overflow: hidden; }
-        .view-section.visible { display: flex; }
-
-        /* --- VUE ACCUEIL (GRILLE) --- */
-        #view-grid { padding: 40px; overflow-y: auto; flex-direction: column; align-items: center; background: white; }
-        .section-title { width: 100%; max-width: 1000px; font-size: 1.5rem; color: #2c3e50; margin: 40px 0 20px 0; border-left: 5px solid #ccc; padding-left: 15px; display: flex; align-items: center; gap: 10px; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; width: 100%; max-width: 1000px; }
-        
-        .card {
-            background: white; border-radius: 12px; padding: 30px; text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease; border: 1px solid #eee;
-        }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
-        .card-icon { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
-
-        /* Boutons d'accès rapide aux cartes globales */
-        .big-map-btn {
-            width: 100%; max-width: 1000px; padding: 20px; margin-bottom: 10px;
-            border-radius: 10px; border: none; cursor: pointer; color: white;
-            font-size: 1.1rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
-            transition: transform 0.2s;
-        }
-        .big-map-btn:hover { transform: scale(1.01); }
-
-        /* --- VUE CARTE (COMMUNE MAIS ADAPTATIVE) --- */
-        #view-map { flex-direction: row; position: relative; }
-        
-        /* Sidebar gauche (Contrôles) */
-        .sidebar-controls {
-            width: 280px; background: white; padding: 20px;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500;
-            display: flex; flex-direction: column;
-        }
-        .sidebar-header { font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
-        
-        .risk-toggle {
-            display: flex; align-items: center; padding: 12px; margin-bottom: 8px;
-            border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; color: #444;
-        }
-        .risk-toggle:hover { background: #f5f5f5; }
-        .chk-box { width: 18px; height: 18px; border: 2px solid #ddd; border-radius: 4px; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
-        .risk-toggle.active .chk-box { border-color: transparent; color: white; }
-
-        /* Sidebar Droite (Explications Collapsible) */
-        .info-panel {
-            position: absolute; right: 20px; top: 20px; bottom: 40px;
-            width: 300px; background: white; border-radius: 12px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000;
-            display: flex; flex-direction: column;
-            transition: transform 0.3s ease;
-        }
-        
-        .info-panel.closed { transform: translateX(340px); } /* Caché à droite */
-        
-        .info-header {
-            padding: 15px 20px; border-top-left-radius: 12px; border-top-right-radius: 12px;
-            color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center;
-        }
-        .info-content { padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #555; }
-        
-        /* Bouton pour réouvrir le panneau */
-        .info-toggle-btn {
-            position: absolute; right: 20px; top: 20px;
-            width: 40px; height: 40px; background: white; border-radius: 50%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 999;
-            display: none; align-items: center; justify-content: center; cursor: pointer;
-            font-size: 1.2rem; color: #333;
-        }
-        .info-toggle-btn.visible { display: flex; }
-
-        #map { flex: 1; height: 100%; transition: background-color 0.3s; }
-
-        /* --- VUE DETAIL & STATS (Gardés du code précédent) --- */
-        #view-detail { flex-direction: column; overflow-y: auto; background: white; }
-        .detail-header { padding: 40px; color: white; position: relative; }
-        .back-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; margin-bottom: 20px; display: inline-block; }
-        .timeline-container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        .timeline-item { position: relative; margin-bottom: 40px; padding-left: 30px; border-left: 2px solid #eee; }
-        .timeline-year { font-weight: bold; background: #333; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
-        
-        #view-stats { padding: 40px; background: #f4f6f8; overflow-y: auto; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; max-width: 1200px; margin: 0 auto; }
-        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-
-    </style>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
     <header>
         <div class="logo-area">
-            <i class="fa-solid fa-layer-group" style="color: var(--inondation);"></i>
+            <img src="logo/logo-site.jpg" alt="Logo" class="header-logo">
             <span>Risques France</span>
         </div>
         <nav class="nav-tabs">
-            <button class="nav-btn active-tab" onclick="switchView('grid')">Accueil</button>
-            <button class="nav-btn" onclick="openMap('naturel')">Carte Naturelle</button>
-            <button class="nav-btn" onclick="openMap('technique')">Carte Technique</button>
-            <button class="nav-btn" onclick="switchView('stats')">Statistiques</button>
+            <button class="nav-btn active-tab" data-target="grid">Accueil</button>
+            <button class="nav-btn" onclick="app.openMap('naturel')">Carte Naturelle</button>
+            <button class="nav-btn" onclick="app.openMap('technique')">Carte Technique</button>
+            <button class="nav-btn" data-target="stats">Statistiques</button>
         </nav>
     </header>
 
     <section id="view-grid" class="view-section visible">
         
-        <button class="big-map-btn" style="background: linear-gradient(to right, #3A6EA5, #8C6A43);" onclick="openMap('naturel')">
-            <span><i class="fa-solid fa-leaf"></i> Accéder à la Carte des Risques Naturels</span>
-            <i class="fa-solid fa-arrow-right"></i>
-        </button>
-        
-        <button class="big-map-btn" style="background: linear-gradient(to right, #5A5A5A, #6B8E23);" onclick="openMap('technique')">
-            <span><i class="fa-solid fa-industry"></i> Accéder à la Carte des Risques Techniques</span>
-            <i class="fa-solid fa-arrow-right"></i>
-        </button>
+        <div class="shortcut-container">
+            <button class="big-map-btn btn-naturel" onclick="app.openMap('naturel')">
+                <span><i class="fa-solid fa-leaf"></i> Accéder aux Risques Naturels</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+            <button class="big-map-btn btn-techno" onclick="app.openMap('technique')">
+                <span><i class="fa-solid fa-industry"></i> Accéder aux Risques Techniques</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
 
-        <div class="section-title" style="border-color: var(--inondation);">Dossiers Naturels</div>
+        <div class="section-title nat-border">Dossiers Naturels</div>
         <div class="grid-container">
-            <div class="card" onclick="openDetail('inondation')">
-                <div class="card-icon" style="background-color: var(--inondation);"><i class="fa-solid fa-water"></i></div>
+            <div class="card" onclick="app.openDetail('inondation')">
+                <div class="card-icon bg-inondation"><i class="fa-solid fa-water"></i></div>
                 <h3>Inondations</h3>
             </div>
-            <div class="card" onclick="openDetail('seisme')">
-                <div class="card-icon" style="background-color: var(--seisme);"><i class="fa-solid fa-house-crack"></i></div>
+            <div class="card" onclick="app.openDetail('seisme')">
+                <div class="card-icon bg-seisme"><i class="fa-solid fa-house-crack"></i></div>
                 <h3>Séismes</h3>
             </div>
-            <div class="card" onclick="openDetail('mouvement')">
-                <div class="card-icon" style="background-color: var(--mouvement);"><i class="fa-solid fa-hill-rockslide"></i></div>
+            <div class="card" onclick="app.openDetail('mouvement')">
+                <div class="card-icon bg-mouvement"><i class="fa-solid fa-hill-rockslide"></i></div>
                 <h3>Mouvements de Terrain</h3>
-            </div>
-            <div class="card" onclick="openDetail('radon')">
-                <div class="card-icon" style="background-color: var(--radon);"><i class="fa-solid fa-wind"></i></div>
-                <h3>Radon</h3>
             </div>
         </div>
 
-        <div class="section-title" style="border-color: var(--nucleaire);">Dossiers Techniques</div>
+        <div class="section-title tech-border">Dossiers Techniques</div>
         <div class="grid-container">
-            <div class="card" onclick="openDetail('industriel')">
-                <div class="card-icon" style="background-color: var(--industriel);"><i class="fa-solid fa-industry"></i></div>
+            <div class="card" onclick="app.openDetail('industriel')">
+                <div class="card-icon bg-industriel"><i class="fa-solid fa-industry"></i></div>
                 <h3>Industriel</h3>
             </div>
-            <div class="card" onclick="openDetail('nucleaire')">
-                <div class="card-icon" style="background-color: var(--nucleaire);"><i class="fa-solid fa-radiation"></i></div>
+            <div class="card" onclick="app.openDetail('nucleaire')">
+                <div class="card-icon bg-nucleaire"><i class="fa-solid fa-radiation"></i></div>
                 <h3>Nucléaire</h3>
             </div>
         </div>
@@ -203,34 +71,23 @@
         <aside class="sidebar-controls">
             <div id="map-title" class="sidebar-header">Carte</div>
             
-            <div id="group-naturel">
-                <div class="risk-toggle" id="btn-inondation" onclick="toggleLayer('inondation', '#3A6EA5')"><div class="chk-box"></div> Inondations</div>
-                <div class="risk-toggle" id="btn-seisme" onclick="toggleLayer('seisme', '#B23A48')"><div class="chk-box"></div> Séismes</div>
-                <div class="risk-toggle" id="btn-mouvement" onclick="toggleLayer('mouvement', '#8C6A43')"><div class="chk-box"></div> Mouvements</div>
-                <div class="risk-toggle" id="btn-radon" onclick="toggleLayer('radon', '#6A4C93')"><div class="chk-box"></div> Radon</div>
-            </div>
+            <div id="controls-container"></div>
 
-            <div id="group-technique">
-                <div class="risk-toggle" id="btn-nucleaire" onclick="toggleLayer('nucleaire', '#5A5A5A')"><div class="chk-box"></div> Nucléaire</div>
-                <div class="risk-toggle" id="btn-industriel" onclick="toggleLayer('industriel', '#6B8E23')"><div class="chk-box"></div> Industriel</div>
-            </div>
-
-            <button onclick="resetMap()" style="margin-top:auto; padding:10px; cursor:pointer; background:#fff; border:1px solid #ddd;">Tout masquer</button>
+            <button onclick="app.resetMap()" class="btn-reset">Tout masquer</button>
         </aside>
 
         <div id="map"></div>
 
-        <div id="info-toggle" class="info-toggle-btn" onclick="toggleInfoPanel(true)">
+        <div id="info-toggle" class="info-toggle-btn" onclick="app.toggleInfoPanel(true)">
             <i class="fa-solid fa-info"></i>
         </div>
 
         <div id="info-panel" class="info-panel">
             <div id="info-header" class="info-header">
                 <span id="info-title-text">Information</span>
-                <i class="fa-solid fa-times" style="cursor:pointer" onclick="toggleInfoPanel(false)"></i>
+                <i class="fa-solid fa-times" onclick="app.toggleInfoPanel(false)"></i>
             </div>
-            <div id="info-content" class="info-content">
-                </div>
+            <div id="info-content" class="info-content"></div>
         </div>
     </section>
 
@@ -238,178 +95,12 @@
 
     <section id="view-stats" class="view-section">
         <div class="stats-grid">
-            <div class="stat-card"><h3>Crues</h3><canvas id="chartCrues"></canvas></div>
-            <div class="stat-card"><h3>Nucléaire (INES)</h3><canvas id="chartINES"></canvas></div>
-            </div>
+            <div class="stat-card"><h3>Crues (Mètres)</h3><div class="chart-box"><canvas id="chartCrues"></canvas></div></div>
+            <div class="stat-card"><h3>Nucléaire (INES)</h3><div class="chart-box"><canvas id="chartINES"></canvas></div></div>
+        </div>
     </section>
 
-    <script>
-        // --- DONNEES ---
-        const mapData = {
-            'inondation': [{loc:[48.85, 2.35], r:15000}, {loc:[44.83, -0.57], r:20000}],
-            'seisme': [{loc:[43.71, 7.26], r:30000}, {loc:[42.69, 2.89], r:25000}],
-            'mouvement': [{loc:[45.76, 4.83], r:10000}],
-            'radon': [{loc:[48.11, -1.67], r:60000}],
-            'nucleaire': [{loc:[47.22, 0.17], r:50000}, {loc:[49.63, 1.62], r:50000}],
-            'industriel': [{loc:[49.44, 1.09], r:15000}, {loc:[43.49, 5.37], r:5000}]
-        };
-
-        const detailsContent = {
-            'inondation': { title: "Inondations", color: "#3A6EA5", icon: "fa-water", timeline: [{year:"1910", t:"Crue Seine"}, {year:"2010", t:"Xynthia"}] },
-            'seisme': { title: "Séismes", color: "#B23A48", icon: "fa-house-crack", timeline: [{year:"1909", t:"Lambesc"}] },
-            // ... (ajouter les autres pour la démo complète)
-            'industriel': { title: "Industriel", color: "#6B8E23", icon: "fa-industry", timeline: [{year:"2001", t:"AZF"}] }
-        };
-
-        // --- MAP INIT ---
-        var map = L.map('map').setView([46.603354, 1.888334], 6);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-        var activeLayers = {};
-
-        // --- LOGIQUE DE NAVIGATION (MODE NATUREL vs TECHNIQUE) ---
-        function openMap(mode) {
-            // 1. Changer la vue
-            switchView('map');
-
-            // 2. Configurer l'interface selon le mode
-            const groupNat = document.getElementById('group-naturel');
-            const groupTech = document.getElementById('group-technique');
-            const mapTitle = document.getElementById('map-title');
-            const infoHeader = document.getElementById('info-header');
-            const infoContent = document.getElementById('info-content');
-            const mapDiv = document.getElementById('map');
-
-            resetMap(); // On nettoie la carte
-
-            if (mode === 'naturel') {
-                // UI
-                groupNat.style.display = 'block';
-                groupTech.style.display = 'none';
-                mapTitle.innerText = "Risques Naturels";
-                mapDiv.style.backgroundColor = "var(--bg-naturel)"; // Fond légèrement bleu
-                
-                // Info Panel
-                infoHeader.style.backgroundColor = "#3A6EA5";
-                document.getElementById('info-title-text').innerText = "Comprendre les Risques Naturels";
-                infoContent.innerHTML = `
-                    <p><strong>Les risques naturels</strong> sont liés aux phénomènes géologiques et climatiques. En France, ils concernent principalement :</p>
-                    <ul>
-                        <li>Les inondations (le risque le plus fréquent).</li>
-                        <li>Les mouvements de terrain en montagne.</li>
-                        <li>La sismicité dans les zones de faille.</li>
-                    </ul>
-                    <p>Utilisez les boutons à gauche pour afficher les zones concernées.</p>
-                `;
-                
-                // Activer une couche par défaut ?
-                toggleLayer('inondation', '#3A6EA5');
-
-            } else {
-                // UI
-                groupNat.style.display = 'none';
-                groupTech.style.display = 'block';
-                mapTitle.innerText = "Risques Technologiques";
-                mapDiv.style.backgroundColor = "var(--bg-techno)"; // Fond gris
-
-                // Info Panel
-                infoHeader.style.backgroundColor = "#5A5A5A";
-                document.getElementById('info-title-text').innerText = "Comprendre les Risques Techniques";
-                infoContent.innerHTML = `
-                    <p><strong>Les risques technologiques</strong> sont liés à l'activité humaine et industrielle.</p>
-                    <p>Ils incluent les sites industriels classés <strong>Seveso</strong> (stockage de produits dangereux) et les installations <strong>nucléaires</strong> (CNPE).</p>
-                    <p>Ces sites font l'objet de plans particuliers d'intervention (PPI).</p>
-                `;
-
-                // Activer une couche par défaut ?
-                toggleLayer('nucleaire', '#5A5A5A');
-            }
-            
-            // Ouvrir le panneau d'info par défaut
-            toggleInfoPanel(true);
-            setTimeout(() => map.invalidateSize(), 100);
-        }
-
-        // --- GESTION DU PANNEAU LATERAL ---
-        function toggleInfoPanel(show) {
-            const panel = document.getElementById('info-panel');
-            const btn = document.getElementById('info-toggle');
-            
-            if(show) {
-                panel.classList.remove('closed');
-                btn.classList.remove('visible');
-            } else {
-                panel.classList.add('closed');
-                btn.classList.add('visible');
-            }
-        }
-
-        // --- FONCTIONS CLASSIQUES (Carte, Toggle, Views) ---
-        function switchView(name) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
-            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active-tab'));
-            
-            document.getElementById('view-' + name).classList.add('visible');
-            
-            // Gestion sommaire des onglets actifs
-            if(name === 'grid') document.querySelectorAll('.nav-btn')[0].classList.add('active-tab');
-            if(name === 'stats') document.querySelectorAll('.nav-btn')[3].classList.add('active-tab');
-        }
-
-        function toggleLayer(type, color) {
-            const btn = document.getElementById('btn-' + type);
-            if(!btn) return;
-            const checkbox = btn.querySelector('.chk-box');
-            
-            if (activeLayers[type]) {
-                map.removeLayer(activeLayers[type]);
-                delete activeLayers[type];
-                btn.classList.remove('active');
-                checkbox.style.backgroundColor = 'transparent';
-                checkbox.style.borderColor = '#ddd';
-            } else {
-                var lg = L.layerGroup();
-                (mapData[type]||[]).forEach(d => {
-                    L.circle(d.loc, {color: color, fillColor:color, fillOpacity:0.4, radius: d.r}).bindPopup(type).addTo(lg);
-                });
-                lg.addTo(map);
-                activeLayers[type] = lg;
-                btn.classList.add('active');
-                checkbox.style.backgroundColor = color;
-                checkbox.style.borderColor = color;
-            }
-        }
-
-        function resetMap() {
-            for (let key in activeLayers) {
-                map.removeLayer(activeLayers[key]);
-                const btn = document.getElementById('btn-' + key);
-                if(btn) {
-                    btn.classList.remove('active');
-                    btn.querySelector('.chk-box').style.backgroundColor = 'transparent';
-                }
-            }
-            activeLayers = {};
-        }
-
-        // Fonction simplifiée pour le détail (pour que le code reste court)
-        function openDetail(key) {
-            const d = detailsContent[key] || detailsContent['inondation']; // Fallback
-            const html = `
-                <div class="detail-header" style="background:${d.color}">
-                    <button class="back-btn" onclick="switchView('grid')">Retour</button>
-                    <h1><i class="fa-solid ${d.icon}"></i> ${d.title}</h1>
-                </div>
-                <div class="timeline-container">
-                    ${d.timeline.map(t => `<div class="timeline-item"><span class="timeline-year">${t.year}</span> ${t.t}</div>`).join('')}
-                </div>`;
-            document.getElementById('view-detail').innerHTML = html;
-            switchView('detail');
-        }
-        
-        // Initialisation Chart.js (Dummy)
-        new Chart(document.getElementById('chartCrues'), {type:'line', data:{labels:[2010,2020], datasets:[{label:'Niveau', data:[5,8]}]}});
-        new Chart(document.getElementById('chartINES'), {type:'bar', data:{labels:[1,2,3], datasets:[{label:'Events', data:[10,2,1]}]}});
-
-    </script>
-</body>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/main.js"></script> </body>
 </html>

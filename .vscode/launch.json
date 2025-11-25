@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Open Test_1_site",
-            "file": "/Users/solanemercier/Documents/GitHub/web_mapping/Test_1_site"
+            "file": "/Users/solanemercier/Documents/GitHub/web_mapping/Test_1_site/index.html"
         }
     ]
 }
