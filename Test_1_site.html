@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webmapping Risques Majeurs</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. CONFIGURATION DES COULEURS (DA) --- */
+        :root {
+            --inondation: #3A6EA5;
+            --seisme: #B23A48;
+            --mouvement: #8C6A43;
+            --nucleaire: #5A5A5A;
+            --industriel: #6B8E23;
+            --radon: #6A4C93;
+            --bg-color: #f4f4f4;
+            --text-color: #333;
+        }
+
+        /* --- 2. MISE EN PAGE GÉNÉRALE --- */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background-color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--nucleaire);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Layout Principal */
+        .main-container {
+            display: flex;
+            flex: 1; /* Prend tout l'espace restant */
+            overflow: hidden;
+        }
+
+        /* Barre latérale (Menu) */
+        .sidebar {
+            width: 300px;
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .sidebar h2 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        /* Boutons de Risques (Style DA) */
+        .risk-btn {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border: none;
+            background: #f9f9f9;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-weight: bold;
+            color: #444;
+            border-left: 5px solid transparent;
+        }
+
+        .risk-btn:hover {
+            background: #eaeaea;
+            transform: translateX(5px);
+        }
+
+        /* Pastille de couleur (Rond) */
+        .dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        /* Styles spécifiques par risque pour les boutons actifs */
+        .risk-btn[data-risk="inondation"]:hover, .risk-btn.active[data-risk="inondation"] {
+            background-color: rgba(58, 110, 165, 0.1);
+            border-left-color: var(--inondation);
+            color: var(--inondation);
+        }
+        .risk-btn[data-risk="seisme"]:hover, .risk-btn.active[data-risk="seisme"] {
+            background-color: rgba(178, 58, 72, 0.1);
+            border-left-color: var(--seisme);
+            color: var(--seisme);
+        }
+        .risk-btn[data-risk="mouvement"]:hover, .risk-btn.active[data-risk="mouvement"] {
+            background-color: rgba(140, 106, 67, 0.1);
+            border-left-color: var(--mouvement);
+            color: var(--mouvement);
+        }
+        .risk-btn[data-risk="nucleaire"]:hover, .risk-btn.active[data-risk="nucleaire"] {
+            background-color: rgba(90, 90, 90, 0.1);
+            border-left-color: var(--nucleaire);
+            color: var(--nucleaire);
+        }
+        .risk-btn[data-risk="industriel"]:hover, .risk-btn.active[data-risk="industriel"] {
+            background-color: rgba(107, 142, 35, 0.1);
+            border-left-color: var(--industriel);
+            color: var(--industriel);
+        }
+        .risk-btn[data-risk="radon"]:hover, .risk-btn.active[data-risk="radon"] {
+            background-color: rgba(106, 76, 147, 0.1);
+            border-left-color: var(--radon);
+            color: var(--radon);
+        }
+
+        /* Zone de la Carte */
+        #map {
+            flex: 1;
+            height: 100%;
+            background-color: #ddd;
+        }
+
+        /* Panneau d'info dynamique */
+        #info-panel {
+            margin-top: auto;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            display: none; /* Caché par défaut */
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Webmapping <span style="font-weight:lighter">Risques Majeurs</span></h1>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+    </header>
+
+    <div class="main-container">
+        
+        <aside class="sidebar">
+            <h2>Sélectionnez un risque</h2>
+            
+            <button class="risk-btn" data-risk="inondation" onclick="changerRisque('inondation', '#3A6EA5', 'Inondations')">
+                <div class="dot" style="background-color: var(--inondation);"></div>
+                Inondations
+            </button>
+
+            <button class="risk-btn" data-risk="seisme" onclick="changerRisque('seisme', '#B23A48', 'Séismes')">
+                <div class="dot" style="background-color: var(--seisme);"></div>
+                Risque Sismique
+            </button>
+
+            <button class="risk-btn" data-risk="mouvement" onclick="changerRisque('mouvement', '#8C6A43', 'Mouvements de terrain')">
+                <div class="dot" style="background-color: var(--mouvement);"></div>
+                Mouvements de terrain
+            </button>
+
+            <button class="risk-btn" data-risk="nucleaire" onclick="changerRisque('nucleaire', '#5A5A5A', 'Accidents nucléaires')">
+                <div class="dot" style="background-color: var(--nucleaire);"></div>
+                Accidents nucléaires
+            </button>
+
+            <button class="risk-btn" data-risk="industriel" onclick="changerRisque('industriel', '#6B8E23', 'Accidents industriels')">
+                <div class="dot" style="background-color: var(--industriel);"></div>
+                Accidents industriels
+            </button>
+
+            <button class="risk-btn" data-risk="radon" onclick="changerRisque('radon', '#6A4C93', 'Radon')">
+                <div class="dot" style="background-color: var(--radon);"></div>
+                Radon
+            </button>
+
+            <div id="info-panel">
+                <h3 id="info-title">Titre</h3>
+                <p id="info-desc">Description...</p>
+            </div>
+        </aside>
+
+        <div id="map"></div>
+
+    </div>
+
+    <script>
+        // 1. Initialisation de la carte (Centrée sur la France)
+        var map = L.map('map').setView([46.603354, 1.888334], 6);
+
+        // 2. Ajout du fond de carte (OpenStreetMap - style standard)
+        // Note: Pour une vraie DA pro, on utiliserait un fond "CartoDB Positron" (gris clair) qui fait mieux ressortir vos couleurs
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // Variable pour stocker la couche actuelle (pour pouvoir la supprimer quand on change)
+        var currentLayer = null;
+
+        // 3. Fonction principale appelée quand on clique sur un bouton
+        function changerRisque(type, couleur, titre) {
+            
+            // A. Gestion du style des boutons (Active/Inactive)
+            document.querySelectorAll('.risk-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.risk-btn[data-risk="${type}"]`).classList.add('active');
+
+            // B. Mise à jour du panneau d'info
+            const infoPanel = document.getElementById('info-panel');
+            const infoTitle = document.getElementById('info-title');
+            const infoDesc = document.getElementById('info-desc');
+            
+            infoPanel.style.display = 'block';
+            infoPanel.style.borderLeft = `4px solid ${couleur}`;
+            infoTitle.innerText = titre;
+            infoTitle.style.color = couleur;
+            
+            // Description factice (à remplacer par vos vraies données plus tard)
+            infoDesc.innerText = `Chargement des données pour le risque : ${titre}...`;
+
+            // C. Interaction avec la carte (Simulation)
+            
+            // Si une couche existe déjà, on l'enlève
+            if (currentLayer) {
+                map.removeLayer(currentLayer);
+            }
+
+            // EXEMPLE : On dessine un cercle aléatoire pour simuler de la donnée
+            // Dans le futur, c'est ici que vous chargerez vos fichiers GeoJSON
+            
+            // Création de données fictives pour l'exemple
+            var dummyData = [
+                [48.8566, 2.3522, 50000], // Paris
+                [45.7640, 4.8357, 40000], // Lyon
+                [43.6047, 1.4442, 35000]  // Toulouse
+            ];
+
+            // Si c'est "Séisme", on change les points par exemple
+            if(type === 'seisme') {
+                 dummyData = [[43.7102, 7.2620, 60000], [42.6986, 2.8956, 40000]]; // Nice, Perpignan
+            }
+
+            // Création d'un groupe de cercles
+            var markers = L.layerGroup();
+            
+            dummyData.forEach(coord => {
+                L.circle([coord[0], coord[1]], {
+                    color: couleur,
+                    fillColor: couleur,
+                    fillOpacity: 0.5,
+                    radius: coord[2]
+                }).bindPopup(`Risque: ${titre}`).addTo(markers);
+            });
+
+            currentLayer = markers;
+            currentLayer.addTo(map);
+        }
+
+    </script>
+</body>
+</html>
