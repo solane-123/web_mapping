@@ -138,12 +138,12 @@ function openMap(mode) {
     toggleInfoPanel(true);
     setTimeout(() => { if(map) map.invalidateSize(); }, 200);
 }
-// --- REMPLACE TA FONCTION openDetail PAR CELLE-CI ---
+// --- REMPLACE UNIQUEMENT LA FONCTION openDetail PAR CELLE-CI ---
+
 function openDetail(key) {
     const d = detailsContent[key];
     if(!d) return;
 
-    // 1. On crée le Header (commun à toutes les pages)
     let html = `
         <div class="detail-header" style="background:${d.color}; padding: 15px 40px; color: white; display:flex; justify-content:space-between; align-items:center;">
             <div>
@@ -155,25 +155,37 @@ function openDetail(key) {
             </button>
         </div>`;
 
-    // 2. LOGIQUE : SI C'EST INONDATION, ON CHANGE L'AFFICHAGE
+    // --- CAS SPECIAL 1 : INONDATION (LAYOUT CORRECT : HAUT/BAS) ---
     if(key === 'inondation') {
-        // --- LAYOUT SPECIAL AVEC CARTE A GAUCHE ---
         html += `
-            <div class="split-layout">
-                <div class="left-map-area"><div id="detail-map-canvas"></div></div>
-                <div class="right-info-area">
+            <div class="map-banner-container">
+                <div id="detail-map-canvas"></div> 
+            </div>
+
+            <div class="content-below-map">
+                <div class="content-col">
                     <h2 style="color:#333; margin-top:0;">Statistiques</h2>
-                    <div style="height:250px; margin-bottom:20px;">
+                    <div style="height:300px;">
                         <canvas id="riskChart"></canvas>
                     </div>
-                    <h2 style="color:#333;">Chronologie</h2>
+                </div>
+                <div class="content-col">
+                    <h2 style="color:#333; margin-top:0;">Chronologie</h2>
                     <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 10px;">
-                        ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 20px; padding-left: 20px; position: relative;"><div style="position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background: ${d.color}; border-radius: 50%;"></div><span style="font-weight:bold; color:${d.color}">${t.year}</span> <div style="font-weight:bold;">${t.t}</div></div>`).join('')}
+                        ${d.timeline.map((t, i) => `
+                            <div class="timeline-item" style="margin-bottom: 30px; padding-left: 20px; position: relative;">
+                                <div style="position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background: ${d.color}; border-radius: 50%;"></div>
+                                <span style="font-weight:bold; color:${d.color}; font-size:1.1rem;">${t.year}</span> 
+                                <div style="font-weight:bold; margin-top:5px;">${t.t}</div>
+                                <div style="color:#666; margin-top:5px;">${t.d}</div>
+                            </div>
+                        `).join('')}
                     </div>
                 </div>
             </div>`;
-    } else {
-        // --- LAYOUT STANDARD (POUR LES AUTRES RISQUES) ---
+    } 
+    // --- AUTRES CAS (Standard) ---
+    else {
         html += `
             <div style="padding: 40px; max-width: 800px; margin: 0 auto;">
                 <h2 style="color:#333;">Chronologie</h2>
@@ -191,16 +203,15 @@ function openDetail(key) {
             </div>`;
     }
 
-    // 3. On injecte le HTML
     document.getElementById('view-detail').innerHTML = html;
     switchView('detail');
 
-    // 4. Si c'est inondation, on lance la carte spéciale
+    // Lancement Carte Inondation
     if(key === 'inondation') { 
-        setTimeout(initInondationMap, 100); // Petit délai pour que la div soit créée
+        setTimeout(initInondationMap, 100); 
     }
     
-    // 5. On crée le graphique si besoin
+    // Graphique
     if (d.chartData) {
         const ctx = document.getElementById('riskChart');
         if(ctx) {
