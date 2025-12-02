@@ -54,18 +54,26 @@
         .info-content { padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #555; }
         .info-toggle-btn { position: absolute; right: 20px; top: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 999; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #333; }
         .info-toggle-btn.visible { display: flex; }
+        
         #map { flex: 1; height: 100%; transition: background-color 0.3s; }
+        #external-frame-container { flex: 1; height: 100%; display: none; }
+        #external-frame-container iframe { width: 100%; height: 100%; border: none; }
 
         /* VUE DETAIL */
         #view-detail { flex-direction: column; overflow-y: auto; background: white; }
         
-        /* Layout Carte Inondation (Split) */
+        /* Layout Carte (Split) - Utilisé pour Industriel */
         .split-layout { display: flex; height: calc(100vh - 120px); }
         .left-map-area { flex: 2; position: relative; border-right: 2px solid #ddd; }
         .right-info-area { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
         
-        /* IFRAME qui contient ta carte externe */
-        #external-map-frame { width: 100%; height: 100%; border: none; }
+        /* Layout Carte (Plein écran Haut + Bas) - Utilisé pour Inondation */
+        .full-map-container { width: 100%; height: 75vh; border-bottom: 2px solid #ddd; }
+        .bottom-content { padding: 40px; display: flex; gap: 40px; flex-wrap: wrap; max-width: 1400px; margin: 0 auto; }
+        .bottom-col { flex: 1; min-width: 300px; }
+
+        /* IFRAME GÉNÉRAL */
+        iframe { width: 100%; height: 100%; border: none; }
     </style>
 </head>
 <body>
@@ -111,19 +119,31 @@
     <section id="view-map" class="view-section">
         <aside class="sidebar-controls">
             <div id="map-title" class="sidebar-header">Carte</div>
+            
             <div id="group-naturel">
                 <div class="risk-toggle" id="btn-inondation" onclick="toggleLayer('inondation', '#3A6EA5')"><div class="chk-box"></div> Inondations</div>
                 <div class="risk-toggle" id="btn-seisme" onclick="toggleLayer('seisme', '#B23A48')"><div class="chk-box"></div> Séismes</div>
                 <div class="risk-toggle" id="btn-mouvement" onclick="toggleLayer('mouvement', '#8C6A43')"><div class="chk-box"></div> Mouvements</div>
                 <div class="risk-toggle" id="btn-radon" onclick="toggleLayer('radon', '#6A4C93')"><div class="chk-box"></div> Radon</div>
             </div>
+
             <div id="group-technique">
-                <div class="risk-toggle" id="btn-nucleaire" onclick="toggleLayer('nucleaire', '#5A5A5A')"><div class="chk-box"></div> Nucléaire</div>
-                <div class="risk-toggle" id="btn-industriel" onclick="toggleLayer('industriel', '#6B8E23')"><div class="chk-box"></div> Industriel</div>
+                <p style="font-size:0.9rem; color:#666; margin-top:10px;">
+                    Cette carte interactive présente l'ensemble des installations classées (Seveso) et nucléaires.
+                </p>
+                <div class="risk-toggle" id="btn-nucleaire" style="display:none;"><div class="chk-box"></div> Nucléaire</div>
+                <div class="risk-toggle" id="btn-industriel" style="display:none;"><div class="chk-box"></div> Industriel</div>
             </div>
-            <button onclick="resetMap()" style="margin-top:auto; padding:10px; cursor:pointer; background:#fff; border:1px solid #ddd;">Tout masquer</button>
+            
+            <button id="reset-btn" onclick="resetMap()" style="margin-top:auto; padding:10px; cursor:pointer; background:#fff; border:1px solid #ddd;">Tout masquer</button>
         </aside>
+
         <div id="map"></div>
+
+        <div id="external-frame-container">
+            <iframe id="main-map-frame" src=""></iframe>
+        </div>
+
         <div id="info-toggle" class="info-toggle-btn" onclick="toggleInfoPanel(true)"><i class="fa-solid fa-info"></i></div>
         <div id="info-panel" class="info-panel-main">
             <div id="info-header" class="info-header"><span id="info-title-text">Information</span><i class="fa-solid fa-times" style="cursor:pointer" onclick="toggleInfoPanel(false)"></i></div>
@@ -136,8 +156,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script>
-        // --- DONNEES CARTE PRINCIPALE ---
+    <script>
+        // --- DONNEES ---
         const mapData = {
             'inondation': [{loc:[48.85, 2.35], r:15000}], 
             'seisme': [{loc:[43.71, 7.26], r:30000}], 
@@ -154,16 +174,21 @@
                 timeline: [{year:"2017", t:"Données Inondation", d:"Analyse nationale."}],
                 chartTitle: "Coût (Mrd €)", chartType: 'line', chartLabels: ['2010', '2015', '2020', '2023'], chartData: [1.2, 0.8, 1.5, 1.1]
             },
+            'industriel': { 
+                title: "Risques Technologiques", color: "#2c3e50", icon: "fa-industry", 
+                desc: "Cartographie globale des risques technologiques et industriels (Sites Seveso, etc.).",
+                timeline: [{year:"2001", t:"Explosion AZF", d:"Plus grave accident industriel."}, {year:"2019", t:"Lubrizol Rouen", d:"Incendie majeur."}],
+                chartTitle: "Sites Seveso", chartType: 'bar', chartLabels: ['Seuil Haut', 'Seuil Bas'], chartData: [700, 600]
+            },
             'seisme': { title: "Risque Sismique", color: "#B23A48", icon: "fa-house-crack", desc: "La France a une sismicité modérée.", timeline: [{year:"1909", t:"Lambesc", d:""}] },
             'nucleaire': { title: "Nucléaire", color: "#27ae60", icon: "fa-radiation", desc: "Centrales Nucléaires.", timeline: [{year:"1969", t:"St-Laurent", d:""}] },
-            'industriel': { title: "Industriel", color: "#2c3e50", icon: "fa-industry", desc: "Sites Seveso.", timeline: [{year:"2001", t:"AZF", d:""}] },
             'mouvement': { title: "Mouvements", color: "#8C6A43", icon: "fa-hill-rockslide", desc: "Glissements.", timeline: [{year:"1953", t:"Harmalière", d:""}] },
             'radon': { title: "Radon", color: "#8e44ad", icon: "fa-wind", desc: "Gaz naturel.", timeline: [{year:"2018", t:"Zonage", d:""}] }
         };
 
         var map, activeLayers = {}, currentChart = null; 
 
-        // --- CORRECTION ICI : GESTION DES ONGLETS ---
+        // --- NAVIGATION ---
         function switchView(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active-tab'));
@@ -171,47 +196,41 @@
             const view = document.getElementById('view-' + name);
             if(view) view.classList.add('visible');
             
-            // Si on est sur l'accueil, on active le 1er bouton (index 0)
             if(name === 'grid') document.querySelectorAll('.nav-btn')[0].classList.add('active-tab');
-            // J'ai supprimé la ligne qui forçait le bouton "Naturelle" ici. C'est openMap qui va gérer.
         }
 
+        // --- GESTION DES CARTES PRINCIPALES (ONGLETS) ---
         function openMap(mode) {
-            switchView('map'); // Change la vue mais ne touche pas aux boutons
-            
+            switchView('map');
             const navBtns = document.querySelectorAll('.nav-btn');
+            
             const mapDiv = document.getElementById('map');
+            const frameDiv = document.getElementById('external-frame-container');
+            const iframe = document.getElementById('main-map-frame');
+            const sidebar = document.querySelector('.sidebar-controls');
+            const infoBtn = document.getElementById('info-toggle');
 
-            // On réinitialise la carte
             resetMap(); 
 
+            // Dans tous les cas, on veut l'iframe plein écran pour les onglets principaux
+            mapDiv.style.display = 'none';
+            frameDiv.style.display = 'block';
+            sidebar.style.display = 'none'; // Pas de sidebar
+            toggleInfoPanel(false); // Pas de panneau info
+            infoBtn.style.display = 'none';
+
             if (mode === 'naturel') {
-                // Active le bouton "Carte Naturelle" (Index 1)
+                // Lien vers la carte Naturelle (DEP_NAT)
+                iframe.src = "https://lietheo.github.io/DEP_NAT/";
                 navBtns[1].classList.add('active-tab');
-
-                document.getElementById('group-naturel').style.display = 'block';
-                document.getElementById('group-technique').style.display = 'none';
-                document.getElementById('map-title').innerText = "Risques Naturels";
-                mapDiv.style.borderTop = "5px solid #3A6EA5";
-                
-                // Ajoute un calque par défaut pour ne pas avoir une carte vide
-                toggleLayer('inondation', '#3A6EA5'); 
-
             } else {
-                // Active le bouton "Carte Technique" (Index 2)
+                // Lien vers la carte Technique (DEP_TECH)
+                iframe.src = "https://lietheo.github.io/DEP_TECH/";
                 navBtns[2].classList.add('active-tab');
-
-                document.getElementById('group-naturel').style.display = 'none';
-                document.getElementById('group-technique').style.display = 'block';
-                document.getElementById('map-title').innerText = "Risques Technologiques";
-                mapDiv.style.borderTop = "5px solid #5A5A5A";
-
-                // Ajoute un calque par défaut
-                toggleLayer('nucleaire', '#5A5A5A');
             }
-            setTimeout(() => { if(map) map.invalidateSize(); }, 200);
         }
 
+        // --- GESTION DES FICHES DETAILS ---
         function openDetail(key) {
             const d = detailsContent[key];
             if(!d) return;
@@ -227,14 +246,36 @@
                     </button>
                 </div>`;
 
+            // --- CAS SPECIAL 1 : INONDATION (PLEINE LARGEUR) ---
             if(key === 'inondation') {
+                html += `
+                    <div class="full-map-container">
+                        <iframe src="https://lietheo.github.io/DEP_NAT/"></iframe>
+                    </div>
+                    <div class="bottom-content">
+                        <div class="bottom-col">
+                            <h2 style="color:#333; margin-top:0;">Statistiques</h2>
+                            <div style="height:300px;">
+                                <canvas id="riskChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bottom-col">
+                            <h2 style="color:#333; margin-top:0;">Chronologie</h2>
+                            <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 10px;">
+                                ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 20px; padding-left: 20px; position: relative;"><div style="position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background: ${d.color}; border-radius: 50%;"></div><span style="font-weight:bold; color:${d.color}">${t.year}</span> <div style="font-weight:bold;">${t.t}</div></div>`).join('')}
+                            </div>
+                        </div>
+                    </div>`;
+            } 
+            // --- CAS SPECIAL 2 : INDUSTRIEL (SPLIT VIEW) ---
+            else if (key === 'industriel') {
                 html += `
                     <div class="split-layout">
                         <div class="left-map-area">
-                            <iframe id="external-map-frame" src="https://clem6703.github.io/Inondation/"></iframe>
+                            <iframe src="https://lietheo.github.io/DEP_TECH/"></iframe>
                         </div>
                         <div class="right-info-area">
-                            <h2 style="color:#333; margin-top:0;">Statistiques</h2>
+                            <h2 style="color:#333; margin-top:0;">Statistiques Seveso</h2>
                             <div style="height:250px; margin-bottom:20px;">
                                 <canvas id="riskChart"></canvas>
                             </div>
@@ -244,13 +285,22 @@
                             </div>
                         </div>
                     </div>`;
-            } else {
-                html += `<div style="padding:40px;">Contenu standard...</div>`;
+            }
+            // --- CAS STANDARD (AUTRES) ---
+            else {
+                html += `<div style="padding:40px;">
+                    <p style="font-size:1.1rem;">${d.desc}</p>
+                    <h2 style="color:#333;">Chronologie</h2>
+                    <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 15px;">
+                        ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 30px; padding-left: 30px; position: relative;"><span style="background:${d.color}; color:white; padding:3px 8px; border-radius:4px;">${t.year}</span> <h3 style="margin: 5px 0;">${t.t}</h3> <p>${t.d}</p></div>`).join('')}
+                    </div>
+                </div>`;
             }
 
             document.getElementById('view-detail').innerHTML = html;
             switchView('detail');
 
+            // Génération du graphique
             if (d.chartData) {
                 const ctx = document.getElementById('riskChart');
                 if(ctx) {
@@ -260,6 +310,7 @@
             }
         }
 
+        // --- AUTRES FONCTIONS GLOBALES ---
         function toggleLayer(type, color) {
             if(!map) return;
             const btn = document.getElementById('btn-' + type);
