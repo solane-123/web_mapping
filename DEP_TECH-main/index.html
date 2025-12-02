@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Carte des Risques Technologiques</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 1. GENERAL & DA --- */
+        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; display: flex; height: 100vh; overflow: hidden; background: #f0f2f5; color: #333; }
+        * { box-sizing: border-box; }
+
+        /* Couleurs Thématiques (Technologique) */
+        :root {
+            --primary: #2c3e50;
+            --accent: #e74c3c; /* Rouge pour le techno */
+            
+            /* Couleurs spécifiques */
+            --col-nucleaire: #E6C229; /* Jaune Nucléaire */
+            --col-industriel: #5A5A5A; /* Gris Industriel */
+            --col-seveso: #C0392B; /* Rouge Seveso */
+        }
+
+        /* --- 2. LAYOUT --- */
+        #layout-container { display: flex; width: 100%; height: 100%; }
+
+        /* --- 3. SIDEBAR (Gauche) --- */
+        .sidebar {
+            width: 380px; 
+            background: white; 
+            z-index: 1000; 
+            box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+            display: flex; flex-direction: column; padding: 30px; 
+            overflow-y: auto; flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-family: 'Montserrat', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--primary);
+            margin: 0 0 10px 0; letter-spacing: -0.5px;
+        }
+        .sidebar-subtitle { font-size: 0.95rem; color: #7f8c8d; margin-bottom: 30px; line-height: 1.5; }
+
+        /* SÉLECTEUR DE RISQUES */
+        .risk-selector { display: flex; flex-direction: column; gap: 12px; }
+        
+        .risk-item {
+            display: flex; align-items: center; padding: 12px 15px; border-radius: 12px;
+            background: #f8f9fa; border: 2px solid transparent; cursor: pointer; transition: all 0.2s;
+        }
+        .risk-item:hover { background: #eef2f5; transform: translateX(5px); }
+        .risk-item.active { 
+            background: white; border-color: var(--accent); 
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.15); 
+        }
+
+        .risk-icon { 
+            width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin-right: 15px; font-size: 1rem; color: white; flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .risk-name { font-weight: 600; color: var(--primary); font-size: 0.95rem; }
+
+        /* Couleurs Icones */
+        .risk-item[data-risk="nucleaire"] .risk-icon { background: var(--col-nucleaire); color: #333; } /* Texte noir pour jaune */
+        .risk-item[data-risk="industriel"] .risk-icon { background: var(--col-industriel); }
+        .risk-item[data-risk="seveso"] .risk-icon { background: var(--col-seveso); }
+
+        /* LÉGENDE */
+        .legend-container { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; }
+        .legend-title { font-size: 0.8rem; text-transform: uppercase; color: #aaa; font-weight: 700; margin-bottom: 15px; letter-spacing: 1px; }
+        .legend-row { display: flex; align-items: center; margin-bottom: 12px; color: #555; font-size: 0.9rem; }
+        .legend-circle { border-radius: 50%; display: inline-block; margin-right: 12px; border: 1px solid rgba(0,0,0,0.1); }
+
+        /* ACCORDÉON DÉTAILS */
+        .details-wrapper { margin-top: auto; padding-top: 20px; }
+        .details-toggle {
+            padding: 12px; text-align: center; color: #7f8c8d; cursor: pointer; font-size: 0.9rem; font-weight: 500;
+            border-radius: 8px; background: #f9f9f9; display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s;
+        }
+        .details-toggle:hover { background: #e0e0e0; color: var(--primary); }
+        .details-panel {
+            display: none; background: #fff; padding: 15px; border-radius: 8px; 
+            font-size: 0.85rem; color: #666; margin-top: 10px; line-height: 1.6; border: 1px solid #eee;
+        }
+        .details-panel.open { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+        /* --- CARTE --- */
+        #map { flex: 1; height: 100%; z-index: 1; background: #e5e9ec; }
+
+        /* --- POPUP STYLISÉE --- */
+        .leaflet-popup-content-wrapper { border-radius: 12px !important; padding: 0 !important; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important; }
+        .leaflet-popup-content { margin: 0 !important; width: 260px !important; }
+        .leaflet-container a.leaflet-popup-close-button { color: white !important; top: 10px; right: 10px; font-size: 18px; }
+        
+        .custom-popup-header { background: #333; color: white; padding: 15px; font-family: 'Montserrat'; font-size: 1rem; font-weight: 700; }
+        .custom-popup-body { padding: 15px; background: white; }
+        .popup-stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
+        .popup-stat-val { font-weight: 700; color: #222; }
+
+    </style>
+</head>
+<body>
+
+    <div id="layout-container">
+        
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Risques Technologiques</div>
+                <div class="sidebar-subtitle">
+                    Cartographie des sites industriels et nucléaires par département.
+                </div>
+            </div>
+
+            <div class="risk-selector">
+                <div class="risk-item active" onclick="changeRisk('nucleaire')" data-risk="nucleaire">
+                    <div class="risk-icon"><i class="fa-solid fa-radiation"></i></div>
+                    <div class="risk-name">Nucléaire</div>
+                </div>
+                <div class="risk-item" onclick="changeRisk('industriel')" data-risk="industriel">
+                    <div class="risk-icon"><i class="fa-solid fa-industry"></i></div>
+                    <div class="risk-name">Industriel</div>
+                </div>
+                <div class="risk-item" onclick="changeRisk('seveso')" data-risk="seveso">
+                    <div class="risk-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div class="risk-name">Seveso</div>
+                </div>
+            </div>
+
+            <div class="legend-container" id="legend-content"></div>
+
+            <div class="details-wrapper">
+                <div class="details-toggle" onclick="toggleDetails()">
+                    <span><i class="fa-solid fa-circle-info"></i> Plus d'infos</span>
+                    <i class="fa-solid fa-chevron-down" id="chevron-icon"></i>
+                </div>
+                <div class="details-panel" id="details-text">
+                    <p><strong>Sources :</strong> Géorisques, BASOL, ASN (2024).</p>
+                    <p>Cette carte recense le nombre d'installations classées (ICPE), sites Seveso (seuils haut et bas) et installations nucléaires de base (INB) par département.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ==========================================
+        // 1. DONNÉES (COPIE DE TON FICHIER JSON)
+        // ==========================================
+        // J'inclus les données ici pour que ça marche direct.
+        // Si tu utilises CENTROIDE.json externe, décommente la ligne <script src...> à la fin.
+        var centroide = {
+            "type": "FeatureCollection",
+            "features": [
+                { "type": "Feature", "properties": { "nom": "ARDECHE", "code_insee": "07", "Seveso 202": 4, "Risque_ind": 4, "Nucléaire": 22 }, "geometry": { "type": "Point", "coordinates": [ 4.42, 44.75 ] } },
+                { "type": "Feature", "properties": { "nom": "SEINE-MARITIME", "code_insee": "76", "Seveso 202": 73, "Risque_ind": 87, "Nucléaire": 206 }, "geometry": { "type": "Point", "coordinates": [ 1.02, 49.65 ] } },
+                { "type": "Feature", "properties": { "nom": "NORD", "code_insee": "59", "Seveso 202": 58, "Risque_ind": 52, "Nucléaire": 7 }, "geometry": { "type": "Point", "coordinates": [ 3.21, 50.44 ] } },
+                { "type": "Feature", "properties": { "nom": "RHONE", "code_insee": "69", "Seveso 202": 45, "Risque_ind": 25, "Nucléaire": 5 }, "geometry": { "type": "Point", "coordinates": [ 4.64, 45.87 ] } },
+                { "type": "Feature", "properties": { "nom": "GIRONDE", "code_insee": "33", "Seveso 202": 35, "Risque_ind": 90, "Nucléaire": 56 }, "geometry": { "type": "Point", "coordinates": [ -0.58, 44.83 ] } },
+                { "type": "Feature", "properties": { "nom": "BOUCHES-DU-RHONE", "code_insee": "13", "Seveso 202": 69, "Risque_ind": 2, "Nucléaire": 5 }, "geometry": { "type": "Point", "coordinates": [ 5.08, 43.54 ] } },
+                { "type": "Feature", "properties": { "nom": "MOSELLE", "code_insee": "57", "Seveso 202": 43, "Risque_ind": 25, "Nucléaire": 41 }, "geometry": { "type": "Point", "coordinates": [ 6.66, 49.03 ] } },
+                { "type": "Feature", "properties": { "nom": "ISERE", "code_insee": "38", "Seveso 202": 60, "Risque_ind": 83, "Nucléaire": 1 }, "geometry": { "type": "Point", "coordinates": [ 5.57, 45.26 ] } }
+                // ... (Le script fonctionnera avec toutes tes données si tu charges ton fichier complet)
+            ]
+        };
+
+        // ==========================================
+        // 2. CONFIGURATION
+        // ==========================================
+        const CONFIG = {
+            'nucleaire': { 
+                label: 'Nucléaire', 
+                color: '#E6C229', 
+                field: 'Nucléaire', // Nom exact dans ton JSON
+                max: 100 // Valeur max estimée pour l'échelle
+            },
+            'industriel': { 
+                label: 'Industriel', 
+                color: '#5A5A5A', 
+                field: 'Risque_ind', 
+                max: 100 
+            },
+            'seveso': { 
+                label: 'Seveso', 
+                color: '#C0392B', 
+                field: 'Seveso 202', // Attention à l'espace dans le nom
+                max: 80 
+            }
+        };
+
+        let map;
+        let currentLayer = null;
+        let activeRisk = 'nucleaire'; // Risque par défaut
+
+        // ==========================================
+        // 3. FONCTIONS
+        // ==========================================
+
+        function initMap() {
+            // Fond de carte sombre/neutre pour faire ressortir les couleurs techno
+            map = L.map('map', { zoomControl: false }).setView([46.6, 2.5], 6);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+            
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            loadLayer(activeRisk);
+            updateLegend(activeRisk);
+        }
+
+        function loadLayer(riskKey) {
+            if (currentLayer) map.removeLayer(currentLayer);
+
+            const conf = CONFIG[riskKey];
+            
+            currentLayer = L.geoJSON(centroide, {
+                pointToLayer: (feature, latlng) => {
+                    const val = feature.properties[conf.field] || 0;
+                    const radius = getRadius(val, conf.max);
+                    
+                    if(radius <= 0) return null;
+
+                    return L.circleMarker(latlng, {
+                        radius: radius,
+                        fillColor: conf.color,
+                        color: 'white',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.85
+                    });
+                },
+                onEachFeature: (feature, layer) => {
+                    const p = feature.properties;
+                    const val = p[conf.field] || 0;
+                    
+                    // Contenu Popup
+                    const content = `
+                        <div class="custom-popup-header" style="background:${conf.color}; color:${riskKey === 'nucleaire' ? '#333' : 'white'}">
+                            ${p.nom} (${p.code_insee})
+                        </div>
+                        <div class="custom-popup-body">
+                            <div class="popup-stat-row">
+                                <span>Type :</span> <strong>${conf.label}</strong>
+                            </div>
+                            <div class="popup-stat-row">
+                                <span>Nombre de sites :</span> <span class="popup-stat-val" style="color:${conf.color}">${val}</span>
+                            </div>
+                        </div>
+                    `;
+                    layer.bindPopup(content, { className: 'custom-popup' });
+
+                    // Hover
+                    layer.on({
+                        mouseover: (e) => {
+                            e.target.setStyle({ weight: 3, color: '#222', fillOpacity: 1 });
+                            e.target.openPopup();
+                        },
+                        mouseout: (e) => {
+                            e.target.setStyle({ weight: 1, color: 'white', fillOpacity: 0.85 });
+                            e.target.closePopup();
+                        }
+                    });
+                }
+            }).addTo(map);
+        }
+
+        function getRadius(val, max) {
+            if (!val) return 0;
+            const minR = 5; const maxR = 35;
+            // Echelle log ou racine carrée souvent mieux pour les cercles
+            return minR + (Math.sqrt(val) / Math.sqrt(max)) * (maxR - minR);
+        }
+
+        function changeRisk(riskKey) {
+            activeRisk = riskKey;
+            
+            document.querySelectorAll('.risk-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.risk-item[data-risk="${riskKey}"]`).classList.add('active');
+
+            loadLayer(riskKey);
+            updateLegend(riskKey);
+        }
+
+        function updateLegend(riskKey) {
+            const conf = CONFIG[riskKey];
+            const max = conf.max;
+            const sizes = [max, Math.round(max/2), Math.round(max/10)];
+            
+            let html = `<div class="legend-title">Légende : ${conf.label}</div>`;
+            
+            sizes.forEach(val => {
+                const r = getRadius(val, max) * 2;
+                html += `
+                    <div class="legend-row">
+                        <span class="legend-circle" style="width:${r}px; height:${r}px; background:${conf.color}; opacity:0.8;"></span>
+                        <span>~${val} Sites</span>
+                    </div>
+                `;
+            });
+            document.getElementById('legend-content').innerHTML = html;
+        }
+
+        function toggleDetails() {
+            const panel = document.getElementById('details-text');
+            const icon = document.getElementById('chevron-icon');
+            
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                panel.style.display = "block";
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            }
+        }
+
+        window.onload = initMap;
+
+    </script>
+    
+    <script src="CENTROIDE.json"></script> 
+
+</body>
+</html>
