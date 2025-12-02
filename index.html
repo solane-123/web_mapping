@@ -3,132 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Webmapping Risques Majeurs</title>
+    <title>Observatoire National des Risques</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- 1. CONFIGURATION DA MODERNE --- */
+        /* --- 1. DESIGN SYSTEM (Charte Graphique) --- */
         :root {
-            --primary-nat: #2ecc71; --secondary-nat: #27ae60;
-            --primary-tech: #e74c3c; --secondary-tech: #c0392b;
-            --text-dark: #2c3e50; --bg-page: #f4f7f6;
+            /* Couleurs principales */
+            --bg-body: #F3F4F6;
+            --surface-white: #ffffff;
+            --surface-glass: rgba(255, 255, 255, 0.85); /* Plus opaque pour lisibilité */
+            
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            
+            --primary: #2563EB; /* Bleu Royal */
+            --primary-light: #EFF6FF;
+            
+            /* Ombres & Arrondis */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --radius-lg: 24px;
+            --radius-md: 16px;
         }
 
-        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; background-color: var(--bg-page); color: var(--text-dark); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* --- HEADER --- */
-        header { background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); padding: 0 40px; height: 70px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
-        .logo-area { display: flex; align-items: center; gap: 12px; font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--text-dark); letter-spacing: -0.5px; }
-        .nav-tabs { display: flex; gap: 30px; height: 100%; }
-        .nav-btn { background: none; border: none; height: 100%; padding: 0 5px; cursor: pointer; font-size: 0.9rem; color: #7f8c8d; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; border-bottom: 3px solid transparent; transition: all 0.3s; }
-        .nav-btn:hover { color: var(--text-dark); }
-        .nav-btn.active-tab { color: #2980b9; border-bottom: 3px solid #2980b9; }
-
-        /* --- VUES --- */
-        .view-section { display: none; flex: 1; height: calc(100vh - 70px); overflow: hidden; position: relative; }
-        .view-section.visible { display: flex; }
-
-        /* --- ACCUEIL MODERNE (SPLIT SCREEN) --- */
-        #view-grid { flex-direction: column; align-items: center; justify-content: center; background: white; padding: 0 20px; }
+        * { box-sizing: border-box; }
         
-        .hero-title { text-align: center; margin-bottom: 50px; animation: fadeInDown 0.8s ease-out; }
-        .hero-title h1 { font-family: 'Montserrat', sans-serif; font-size: 3rem; margin: 0; color: var(--text-dark); }
-        .hero-title p { font-size: 1.2rem; color: #7f8c8d; margin-top: 10px; font-weight: 300; }
+        body { 
+            margin: 0; padding: 0; 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-body); 
+            /* Fond subtil animé */
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%);
+            color: var(--text-main); 
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
+        }
 
-        .choice-container { display: flex; gap: 40px; width: 100%; max-width: 1200px; height: 450px; perspective: 1000px; }
+        /* --- 2. HEADER FLOTTANT --- */
+        header { 
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            width: 95%; max-width: 1400px;
+            background: var(--surface-glass); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 0 30px; height: 70px; 
+            border-radius: 100px;
+            border: 1px solid rgba(255,255,255,0.6);
+            box-shadow: var(--shadow-lg); 
+            display: flex; align-items: center; justify-content: space-between; 
+            z-index: 2000;
+            animation: slideDown 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
 
-        .hero-card { flex: 1; position: relative; border-radius: 30px; overflow: hidden; cursor: pointer; box-shadow: 0 20px 50px rgba(0,0,0,0.1); transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: white; }
-        .hero-card.nat { background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%); }
-        .hero-card.tech { background: linear-gradient(135deg, #232526 0%, #414345 100%); }
-        .hero-card:hover { transform: translateY(-15px) scale(1.02); box-shadow: 0 30px 60px rgba(0,0,0,0.2); }
+        .logo-area { 
+            display: flex; align-items: center; gap: 12px; 
+            font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 1.4rem; 
+            color: var(--text-main); letter-spacing: -0.03em;
+        }
+        .logo-area i { color: var(--primary); }
         
-        .card-content { position: relative; z-index: 2; padding: 40px; }
-        .card-icon { font-size: 5rem; margin-bottom: 20px; transition: transform 0.4s; text-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .card-title { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
-        .card-desc { font-size: 1.1rem; font-weight: 300; opacity: 0.9; line-height: 1.5; }
-        .card-btn { margin-top: 30px; padding: 12px 30px; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 50px; color: white; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; backdrop-filter: blur(5px); transition: background 0.3s; }
-        .hero-card:hover .card-btn { background: white; color: #333; }
+        .nav-tabs { display: flex; gap: 6px; background: rgba(0,0,0,0.04); padding: 4px; border-radius: 50px; }
+        
+        .nav-btn { 
+            background: transparent; border: none; padding: 10px 24px; 
+            border-radius: 40px; cursor: pointer; font-size: 0.95rem; font-weight: 500; 
+            color: var(--text-muted); transition: all 0.3s ease;
+        }
+        .nav-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.5); }
+        .nav-btn.active-tab { 
+            background: white; color: var(--primary); 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-weight: 600;
+        }
 
-        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        /* --- 3. GESTION DES VUES --- */
+        .view-section { 
+            display: none; flex: 1; height: 100%; width: 100%;
+            padding-top: 110px; /* Espace pour le header */
+            opacity: 0; transform: scale(0.99); transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .view-section.visible { 
+            display: flex; opacity: 1; transform: scale(1); 
+        }
 
-        /* --- VUE CARTE (PLEIN ECRAN) --- */
-        #view-map { flex-direction: row; position: relative; width: 100%; height: 100%; }
-        .sidebar-controls { display: none; } /* Sidebar cachée par défaut */
-        #map { display: none; } /* Leaflet de base caché */
-        #external-frame-container { flex: 1; height: 100%; width: 100%; display: none; background: #e0e0e0; }
+        /* --- 4. PAGE D'ACCUEIL (BENTO GRID) --- */
+        #view-grid { 
+            flex-direction: column; align-items: center; 
+            overflow-y: auto; padding-bottom: 60px;
+        }
+
+        .hero-title { text-align: center; margin-bottom: 50px; padding: 0 20px; }
+        .hero-title h1 { 
+            font-family: 'Space Grotesk', sans-serif; font-size: 4rem; margin: 0; line-height: 1.1;
+            background: linear-gradient(135deg, #111827 0%, #4B5563 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero-title p { 
+            font-size: 1.25rem; color: var(--text-muted); margin-top: 16px; 
+            max-width: 650px; margin-left: auto; margin-right: auto; line-height: 1.6;
+        }
+
+        /* Grille Bento */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            width: 100%; max-width: 1280px; padding: 0 20px;
+        }
+
+        /* Grandes Cartes (Accès rapide aux cartes globales) */
+        .big-card {
+            grid-column: span 2;
+            height: 340px;
+            border-radius: var(--radius-lg);
+            position: relative; overflow: hidden; cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        .big-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+        
+        .big-card.nat { background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); }
+        .big-card.tech { background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); }
+
+        .big-card-content {
+            position: absolute; bottom: 0; left: 0; width: 100%; padding: 40px;
+            background: linear-gradient(to top, rgba(255,255,255,0.95), transparent);
+        }
+        .big-card h2 { font-family: 'Space Grotesk'; font-size: 2.2rem; margin: 0; color: var(--text-main); letter-spacing: -0.03em; }
+        .big-card p { color: var(--text-muted); margin: 8px 0 24px 0; font-size: 1.1rem; }
+        .action-chip { 
+            background: var(--text-main); color: white; padding: 10px 20px; border-radius: 30px; 
+            font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.2s;
+        }
+        .big-card:hover .action-chip { background: var(--primary); }
+        
+        .bg-icon {
+            position: absolute; top: 30px; right: 30px; font-size: 10rem; opacity: 0.08;
+            transform: rotate(-10deg); transition: transform 0.5s;
+        }
+        .big-card:hover .bg-icon { transform: rotate(0deg) scale(1.1); opacity: 0.15; }
+
+        /* Petites Cartes (Widgets Risques) */
+        .small-card {
+            grid-column: span 1;
+            background: var(--surface-white);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0,0,0,0.03);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex; flex-direction: column; justify-content: space-between; height: 220px;
+        }
+        .small-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
+
+        .small-icon {
+            width: 56px; height: 56px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; margin-bottom: 20px;
+        }
+        .small-card h3 { font-size: 1.25rem; margin: 0; font-weight: 700; color: var(--text-main); }
+        .stat-preview { font-size: 0.9rem; color: var(--text-muted); margin-top: 6px; }
+
+        /* Couleurs Thématiques */
+        .icon-water { background: #E0F2FE; color: #0284C7; }
+        .icon-fire { background: #FEE2E2; color: #DC2626; }
+        .icon-earth { background: #FEF3C7; color: #D97706; }
+        .icon-wind { background: #F3E8FF; color: #7E22CE; }
+        .icon-factory { background: #F1F5F9; color: #475569; }
+        .icon-atom { background: #ECFDF5; color: #059669; }
+
+        /* Séparateurs de section */
+        .grid-header { grid-column: span 4; margin-top: 40px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
+        .grid-header span { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; color: #9CA3AF; }
+        .grid-line { flex: 1; height: 1px; background: #E5E7EB; }
+
+
+        /* --- 5. VUE CARTE (PLEIN ÉCRAN) --- */
+        #view-map { position: relative; width: 100%; height: 100%; padding: 0; }
+        
+        .map-frame-wrapper {
+            width: 100%; height: 100%;
+            border: none; overflow: hidden; position: relative;
+        }
         iframe { width: 100%; height: 100%; border: none; }
 
-        /* --- VUE DETAIL --- */
-        #view-detail { flex-direction: column; overflow-y: auto; background: white; }
+        /* Éléments masqués (pour compatibilité script) */
+        .sidebar-controls, #map, #external-frame-container { display: none !important; }
+
+
+        /* --- 6. VUE DÉTAIL (CONTENU RICHE) --- */
+        #view-detail { flex-direction: column; overflow-y: auto; background: var(--bg-body); }
         
-        .detail-header { padding: 20px 40px; color: white; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 10; }
-        .back-btn { background: rgba(255,255,255,0.9); border: none; padding: 10px 20px; border-radius: 30px; font-weight: bold; cursor: pointer; transition: transform 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .back-btn:hover { transform: translateX(-3px); }
+        /* En-tête Bannière */
+        .detail-banner {
+            width: 100%; padding: 60px 20px; background: var(--surface-white); border-bottom: 1px solid #E5E7EB;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            position: relative;
+        }
+        .detail-icon-large {
+            width: 90px; height: 90px; border-radius: 28px; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; margin-bottom: 24px;
+            box-shadow: var(--shadow-lg);
+        }
+        .detail-title { font-family: 'Space Grotesk'; font-size: 3rem; margin: 0; color: var(--text-main); line-height: 1.1; }
+        .detail-desc { max-width: 700px; color: var(--text-muted); margin-top: 16px; line-height: 1.7; font-size: 1.1rem; }
+        
+        .back-btn-float {
+            position: absolute; top: 40px; left: 40px;
+            background: white; border: 1px solid #E5E7EB; padding: 12px 24px;
+            border-radius: 100px; cursor: pointer; font-weight: 600; color: var(--text-muted);
+            transition: all 0.2s; display: flex; align-items: center; gap: 10px;
+            box-shadow: var(--shadow-sm); font-size: 0.95rem;
+        }
+        .back-btn-float:hover { background: var(--text-main); color: white; transform: translateX(-4px); border-color: var(--text-main); }
 
-        /* Layout Inondation (Haut/Bas) */
-        .map-banner-container { width: 100%; height: 70vh; border-bottom: 4px solid #eee; background: #f0f0f0; position: relative; }
-        .content-below-map { padding: 40px; max-width: 1400px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 60px; }
-        .content-col { flex: 1; min-width: 350px; }
+        /* Conteneur principal */
+        .detail-content {
+            max-width: 1280px; margin: 40px auto; width: 100%; padding: 0 24px 60px 24px;
+            display: flex; flex-direction: column; gap: 40px;
+        }
 
-        /* Layout Industriel (Split) */
-        .split-layout { display: flex; height: calc(100vh - 70px); }
-        .left-map-area { flex: 65; position: relative; border-right: 1px solid #ddd; }
-        .right-info-area { flex: 35; overflow-y: auto; padding: 40px; background: #fff; }
+        /* Carte Intégrée (iframe) */
+        .map-card-container {
+            width: 100%; height: 650px; 
+            background: white; border-radius: var(--radius-lg); 
+            box-shadow: var(--shadow-lg); overflow: hidden; border: 1px solid rgba(0,0,0,0.05);
+        }
 
-        /* Timeline */
-        .timeline-item { margin-bottom: 30px; padding-left: 20px; position: relative; }
-        .timeline-year { font-family: 'Montserrat', sans-serif; font-size: 1.2rem; font-weight: 800; display: block; margin-bottom: 5px; }
+        /* Grille Stats & Historique */
+        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        
+        .info-card {
+            background: white; border-radius: var(--radius-lg); padding: 32px;
+            box-shadow: var(--shadow-sm); border: 1px solid rgba(0,0,0,0.04);
+        }
+        .info-card h3 { 
+            margin-top: 0; font-family: 'Space Grotesk'; font-size: 1.5rem; 
+            border-bottom: 1px solid #F3F4F6; padding-bottom: 20px; margin-bottom: 24px;
+        }
+
+        /* Timeline Verticale */
+        .timeline { margin-top: 10px; }
+        .event { 
+            display: flex; gap: 24px; margin-bottom: 32px; 
+            position: relative; 
+        }
+        .event::before {
+            content: ''; position: absolute; left: 24px; top: 40px; bottom: -40px; width: 2px; background: #E5E7EB;
+        }
+        .event:last-child::before { display: none; }
+        
+        .event-year {
+            background: var(--text-main); color: white; padding: 6px 14px; border-radius: 8px;
+            font-weight: 700; font-size: 0.9rem; height: fit-content; z-index: 2; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .event-body { background: #F9FAFB; padding: 20px; border-radius: 16px; flex: 1; border: 1px solid #F3F4F6; }
+        .event-body strong { display: block; color: var(--text-main); margin-bottom: 6px; font-size: 1.1rem; }
+        .event-body span { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+
+        /* Animations */
+        @keyframes slideDown { from { transform: translate(-50%, -100%); } to { transform: translate(-50%, 0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .animate-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo-area">
-            <i class="fa-solid fa-earth-europe" style="color: #2980b9;"></i>
-            <span>Risques France</span>
+            <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i>
+            <span>Risques.Fr</span>
         </div>
         <nav class="nav-tabs">
-            <button class="nav-btn active-tab" onclick="switchView('grid')">Accueil</button>
+            <button class="nav-btn active-tab" onclick="switchView('grid')">Tableau de bord</button>
             <button class="nav-btn" onclick="openMap('naturel')">Carte Naturelle</button>
             <button class="nav-btn" onclick="openMap('technique')">Carte Technologique</button>
         </nav>
     </header>
 
     <section id="view-grid" class="view-section visible">
-        <div class="hero-title">
-            <h1>Observatoire des Risques</h1>
-            <p>Plateforme nationale de visualisation des aléas</p>
+        
+        <div class="hero-title animate-in">
+            <h1>Observatoire National des Risques</h1>
+            <p>Plateforme de visualisation et d'analyse des aléas naturels et technologiques majeurs. Explorez les données territoriales françaises en haute résolution.</p>
         </div>
 
-        <div class="choice-container">
-            <div class="hero-card nat" onclick="openMap('naturel')">
-                <div class="card-content">
-                    <div class="card-icon"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
-                    <div class="card-title">Risques Naturels</div>
-                    <div class="card-desc">Inondations, Séismes, Mouvements de terrain...</div>
-                    <div class="card-btn">Explorer la carte</div>
+        <div class="dashboard-grid">
+            
+            <div class="grid-header animate-in delay-1"><span>Risques Naturels</span><div class="grid-line"></div></div>
+
+            <div class="big-card nat animate-in delay-1" onclick="openMap('naturel')">
+                <i class="fa-solid fa-cloud-showers-heavy bg-icon"></i>
+                <div class="big-card-content">
+                    <h2>Carte Naturelle</h2>
+                    <p>Visualisation globale des aléas climatiques et géologiques.</p>
+                    <div class="action-chip"><i class="fa-solid fa-map"></i> Ouvrir la carte interactive</div>
                 </div>
             </div>
 
-            <div class="hero-card tech" onclick="openMap('technique')">
-                <div class="card-content">
-                    <div class="card-icon"><i class="fa-solid fa-industry"></i></div>
-                    <div class="card-title">Risques Technologiques</div>
-                    <div class="card-desc">Installations classées Seveso, Nucléaire...</div>
-                    <div class="card-btn">Explorer la carte</div>
+            <div class="small-card animate-in delay-2" onclick="openDetail('inondation')">
+                <div class="small-icon icon-water"><i class="fa-solid fa-water"></i></div>
+                <h3>Inondations</h3>
+                <div class="stat-preview">Le risque n°1 en France</div>
+            </div>
+            <div class="small-card animate-in delay-2" onclick="openDetail('seisme')">
+                <div class="small-icon icon-earth"><i class="fa-solid fa-house-crack"></i></div>
+                <h3>Séismes</h3>
+                <div class="stat-preview">Zones de sismicité 1 à 5</div>
+            </div>
+            <div class="small-card animate-in delay-3" onclick="openDetail('mouvement')">
+                <div class="small-icon icon-earth"><i class="fa-solid fa-hill-rockslide"></i></div>
+                <h3>Mouvements</h3>
+                <div class="stat-preview">Glissements & Eboulements</div>
+            </div>
+            <div class="small-card animate-in delay-3" onclick="openDetail('radon')">
+                <div class="small-icon icon-wind"><i class="fa-solid fa-wind"></i></div>
+                <h3>Radon</h3>
+                <div class="stat-preview">Potentiel par commune</div>
+            </div>
+
+            <div class="grid-header animate-in delay-2"><span>Risques Technologiques</span><div class="grid-line"></div></div>
+
+            <div class="big-card tech animate-in delay-2" onclick="openMap('technique')">
+                <i class="fa-solid fa-industry bg-icon"></i>
+                <div class="big-card-content">
+                    <h2>Carte Technologique</h2>
+                    <p>Installations classées, Sites Seveso et Nucléaire.</p>
+                    <div class="action-chip"><i class="fa-solid fa-map"></i> Ouvrir la carte interactive</div>
                 </div>
             </div>
+
+            <div class="small-card animate-in delay-3" onclick="openDetail('industriel')">
+                <div class="small-icon icon-factory"><i class="fa-solid fa-industry"></i></div>
+                <h3>Industriel</h3>
+                <div class="stat-preview">Sites Seveso Haut / Bas</div>
+            </div>
+            <div class="small-card animate-in delay-3" onclick="openDetail('nucleaire')">
+                <div class="small-icon icon-atom"><i class="fa-solid fa-radiation"></i></div>
+                <h3>Nucléaire</h3>
+                <div class="stat-preview">Centrales & Laboratoires</div>
+            </div>
+
         </div>
     </section>
 
     <section id="view-map" class="view-section">
-        <aside class="sidebar-controls"></aside> 
-        <div id="map"></div> <div id="external-frame-container">
+        <div class="map-frame-wrapper">
             <iframe id="main-map-frame" src=""></iframe>
         </div>
+        <div id="map"></div>
+        <div id="external-frame-container"></div>
+        <div class="sidebar-controls"></div>
     </section>
 
     <section id="view-detail" class="view-section"></section>
@@ -137,25 +374,31 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // --- DONNEES ---
+        // --- DONNEES DE CONTENU ---
         const detailsContent = {
             'inondation': { 
-                title: "Inondations", color: "#0083B0", icon: "fa-water", 
-                desc: "Carte interactive et comparative des risques d'inondation en France.",
-                timeline: [{year:"2017", t:"Données Inondation", d:"Analyse nationale."}],
-                chartTitle: "Coût (Mrd €)", chartType: 'line', chartLabels: ['2010', '2015', '2020', '2023'], chartData: [1.2, 0.8, 1.5, 1.1]
+                title: "Inondations", color: "#0284C7", icon: "fa-water", bg:"icon-water",
+                desc: "Les inondations représentent le premier risque naturel en France par l'importance des dommages qu'elles provoquent. Cette carte interactive permet de visualiser les zones inondables et l'historique des crues majeures.",
+                timeline: [{year:"2017", t:"Données Inondation", d:"Analyse nationale des territoires à risque important d'inondation (TRI)."}],
+                chartTitle: "Coût annuel des dommages (Milliards €)", chartType: 'line', 
+                chartLabels: ['2010', '2015', '2020', '2023'], chartData: [1.2, 0.8, 1.5, 1.1]
             },
             'industriel': { 
-                title: "Risques Technologiques", color: "#414345", icon: "fa-industry", 
-                desc: "Cartographie globale des risques technologiques.",
-                timeline: [{year:"2001", t:"Explosion AZF", d:"Plus grave accident industriel."}, {year:"2019", t:"Lubrizol Rouen", d:"Incendie majeur."}],
-                chartTitle: "Sites Seveso", chartType: 'bar', chartLabels: ['Seuil Haut', 'Seuil Bas'], chartData: [700, 600]
-            }
+                title: "Industriel (Seveso)", color: "#475569", icon: "fa-industry", bg:"icon-factory",
+                desc: "La directive Seveso impose aux États membres de l'UE d'identifier les sites industriels présentant des risques d'accidents majeurs. En France, environ 1300 établissements sont concernés.",
+                timeline: [{year:"2001", t:"Explosion AZF (Toulouse)", d:"Le plus grave accident industriel en France (31 morts)."}, {year:"2019", t:"Incendie Lubrizol (Rouen)", d:"Incendie majeur avec panache de fumée noire."}],
+                chartTitle: "Répartition des sites Seveso", chartType: 'bar', 
+                chartLabels: ['Seuil Haut', 'Seuil Bas'], chartData: [705, 607]
+            },
+            'seisme': { title: "Risque Sismique", color: "#D97706", icon: "fa-house-crack", bg:"icon-earth", desc: "La France dispose d'un nouveau zonage sismique depuis 2011, divisant le territoire en 5 zones de sismicité croissante.", timeline: [{year:"1909", t:"Séisme de Lambesc", d:"Magnitude 6.2, le plus fort séisme enregistré en France métropolitaine au XXe siècle."}] },
+            'nucleaire': { title: "Nucléaire", color: "#059669", icon: "fa-radiation", bg:"icon-atom", desc: "Le parc nucléaire français compte 56 réacteurs répartis sur 18 sites. La sûreté de ces installations est contrôlée en permanence par l'Autorité de Sûreté Nucléaire (ASN).", timeline: [{year:"1980", t:"Saint-Laurent-des-Eaux", d:"Accident de niveau 4 sur l'échelle INES (fusion partielle du cœur)."}] },
+            'mouvement': { title: "Mouvements de Terrain", color: "#D97706", icon: "fa-hill-rockslide", bg:"icon-earth", desc: "Les mouvements de terrain regroupent un ensemble de déplacements du sol : effondrements, chutes de blocs, glissements de terrain et coulées de boue.", timeline: [{year:"--", t:"Surveillance RTM", d:"Les Services de Restauration des Terrains en Montagne surveillent les zones à risque."}] },
+            'radon': { title: "Radon", color: "#7E22CE", icon: "fa-wind", bg:"icon-wind", desc: "Le radon est un gaz radioactif naturel inodore et incolore, provenant de la désintégration de l'uranium et du radium présents dans la croûte terrestre.", timeline: [{year:"2018", t:"Nouveau Zonage", d:"Classification des communes en 3 zones à potentiel radon (faible à significatif)."}] }
         };
 
         var currentChart = null; 
 
-        // --- NAVIGATION ---
+        // --- NAVIGATION ENTRE LES VUES ---
         function switchView(name) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
             document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active-tab'));
@@ -166,99 +409,123 @@
             if(name === 'grid') document.querySelectorAll('.nav-btn')[0].classList.add('active-tab');
         }
 
-        // --- OUVERTURE CARTES PRINCIPALES (LIENS LOCAUX) ---
+        // --- OUVERTURE DES CARTES GLOBALES ---
         function openMap(mode) {
             switchView('map');
             const navBtns = document.querySelectorAll('.nav-btn');
             const iframe = document.getElementById('main-map-frame');
             
-            document.getElementById('external-frame-container').style.display = 'block';
-            document.getElementById('map').style.display = 'none'; 
-
-            // Réinitialise les boutons
+            // Réinitialise les onglets actifs
             navBtns.forEach(b => b.classList.remove('active-tab'));
 
             if (mode === 'naturel') {
-                iframe.src = "DEP_NAT-main/index.html"; // Lien LOCAL
-                navBtns[1].classList.add('active-tab');
+                iframe.src = "DEP_NAT-main/index.html"; // Lien vers le dossier local
+                if(navBtns[1]) navBtns[1].classList.add('active-tab');
             } else {
-                iframe.src = "DEP_TECH-main/index.html"; // Lien LOCAL
-                navBtns[2].classList.add('active-tab');
+                iframe.src = "DEP_TECH-main/index.html"; // Lien vers le dossier local
+                if(navBtns[2]) navBtns[2].classList.add('active-tab');
             }
         }
 
-        // --- OUVERTURE FICHE DETAIL (FONCTION CORRIGÉE) ---
+        // --- OUVERTURE DE LA FICHE DÉTAIL ---
         function openDetail(key) {
             const d = detailsContent[key];
             if(!d) return;
 
             let html = `
-                <div class="detail-header" style="background:${d.color};">
-                    <div style="display:flex; align-items:center; gap:15px;">
-                        <i class="fa-solid ${d.icon}" style="font-size:2rem;"></i>
-                        <h1 style="margin:0; font-family:'Montserrat', sans-serif;">${d.title}</h1>
-                    </div>
-                    <button class="back-btn" onclick="switchView('grid')" style="color:${d.color}">
+                <div class="detail-banner">
+                    <button class="back-btn-float" onclick="switchView('grid')">
                         <i class="fa-solid fa-arrow-left"></i> Retour
                     </button>
-                </div>`;
+                    <div class="detail-icon-large ${d.bg}">
+                        <i class="fa-solid ${d.icon}"></i>
+                    </div>
+                    <h1 class="detail-title">${d.title}</h1>
+                    <p class="detail-desc">${d.desc}</p>
+                </div>
 
-            // CAS INONDATION (Carte Large + Contenu Dessous)
+                <div class="detail-content animate-in">`;
+
+            // --- INTEGRATION CARTE SI DISPONIBLE (INONDATION / INDUSTRIEL) ---
             if(key === 'inondation') {
                 html += `
-                    <div class="map-banner-container">
-                        <iframe src="DEP_NAT-main/index.html"></iframe>
-                    </div>
-                    <div class="content-below-map">
-                        <div class="content-col">
-                            <h2 style="font-family:'Montserrat'; color:${d.color}; border-bottom:2px solid #eee; padding-bottom:10px;">Statistiques</h2>
-                            <div style="height:300px; margin-top:20px;"><canvas id="riskChart"></canvas></div>
-                        </div>
-                        <div class="content-col">
-                            <h2 style="font-family:'Montserrat'; color:${d.color}; border-bottom:2px solid #eee; padding-bottom:10px;">Historique</h2>
-                            <div style="margin-top:30px; border-left:3px solid ${d.color}; padding-left:20px;">
-                                ${d.timeline.map(t => `
-                                    <div class="timeline-item" style="color:${d.color}">
-                                        <span class="timeline-year">${t.year}</span>
-                                        <div><strong>${t.t}</strong><br>${t.d}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
+                    <div class="map-card-container">
+                        <iframe src="DEP_NAT-main/index.html" style="width:100%; height:100%; border:none;"></iframe>
                     </div>`;
-            } 
-            // CAS INDUSTRIEL (Split View)
-            else if (key === 'industriel') {
+            } else if (key === 'industriel') {
                 html += `
-                    <div class="split-layout">
-                        <div class="left-map-area"><iframe src="DEP_TECH-main/index.html"></iframe></div>
-                        <div class="right-info-area">
-                            <h2 style="font-family:'Montserrat'; color:${d.color};">Statistiques</h2>
-                            <div style="height:250px; margin-bottom:40px;"><canvas id="riskChart"></canvas></div>
-                            <h2 style="font-family:'Montserrat'; color:${d.color};">Historique</h2>
-                            <div style="margin-top:20px; border-left:3px solid ${d.color}; padding-left:20px;">
-                                ${d.timeline.map(t => `
-                                    <div class="timeline-item" style="color:${d.color}">
-                                        <span class="timeline-year">${t.year}</span>
-                                        <div><strong>${t.t}</strong><br>${t.d}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
+                    <div class="map-card-container">
+                        <iframe src="DEP_TECH-main/index.html" style="width:100%; height:100%; border:none;"></iframe>
                     </div>`;
             }
+
+            // --- CONTENU STATS ET HISTORIQUE ---
+            html += `
+                    <div class="stats-row">
+                        <div class="info-card">
+                            <h3>Statistiques Clés</h3>
+                            <div style="height:250px; display:flex; align-items:center; justify-content:center;">
+                                ${d.chartData 
+                                    ? '<canvas id="riskChart"></canvas>' 
+                                    : '<p style="color:#999;">Données graphiques non disponibles</p>'}
+                            </div>
+                        </div>
+                        <div class="info-card">
+                            <h3>Historique Majeur</h3>
+                            <div class="timeline">
+                                ${d.timeline.map(t => `
+                                    <div class="event">
+                                        <div class="event-year">${t.year}</div>
+                                        <div class="event-body">
+                                            <strong>${t.t}</strong>
+                                            <span>${t.d}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>`; // Fin detail-content
 
             document.getElementById('view-detail').innerHTML = html;
             switchView('detail');
 
+            // Génération du graphique Chart.js
             if (d.chartData) {
-                const ctx = document.getElementById('riskChart');
-                if(ctx) {
-                    if (currentChart) currentChart.destroy();
-                    currentChart = new Chart(ctx, { type: d.chartType, data: { labels: d.chartLabels, datasets: [{ label: d.chartTitle, data: d.chartData, backgroundColor: d.color, borderColor: d.color, borderWidth:1 }] }, options: { responsive: true, maintainAspectRatio: false } });
-                }
+                setTimeout(() => {
+                    const ctx = document.getElementById('riskChart');
+                    if(ctx) {
+                        if (currentChart) currentChart.destroy();
+                        currentChart = new Chart(ctx, { 
+                            type: d.chartType || 'bar', 
+                            data: { 
+                                labels: d.chartLabels, 
+                                datasets: [{ 
+                                    label: d.chartTitle, 
+                                    data: d.chartData, 
+                                    backgroundColor: d.color, 
+                                    borderRadius: 6
+                                }] 
+                            }, 
+                            options: { 
+                                responsive: true, 
+                                maintainAspectRatio: false,
+                                plugins: { legend: { display: false } },
+                                scales: { 
+                                    y: { grid: { borderDash: [5, 5] }, beginAtZero: true },
+                                    x: { grid: { display: false } }
+                                }
+                            } 
+                        });
+                    }
+                }, 100);
             }
         }
+
+        // Fonctions placeholder pour éviter les erreurs de référence
+        function toggleLayer() {}
+        function resetMap() {}
+        function toggleInfoPanel() {}
     </script>
 </body>
 </html>
