@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Carte des Risques Naturels</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- 2. CSS / STYLE MODERNE --- */
+        
+        /* Reset & Base */
+        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; display: flex; height: 100vh; overflow: hidden; background: #f0f2f5; color: #333; }
+        * { box-sizing: border-box; }
+
+        /* Couleurs de la Charte */
+        :root {
+            --primary-text: #2c3e50;
+            --secondary-text: #7f8c8d;
+            --accent-color: #3498db;
+            
+            /* Couleurs spécifiques aux risques */
+            --col-inondation: #5B7687;
+            --col-radon: #917180;
+            --col-mouvement: #C0956D;
+            --col-seisme: #CC7367;
+            --col-arrete: #4169E1;
+        }
+
+        /* Layout Principal */
+        #layout-container { display: flex; width: 100%; height: 100%; }
+
+        /* --- SIDEBAR (GAUCHE) --- */
+        .sidebar {
+            width: 380px; 
+            background: white; 
+            z-index: 1000; 
+            box-shadow: 4px 0 20px rgba(0,0,0,0.08);
+            display: flex; 
+            flex-direction: column; 
+            padding: 30px; 
+            overflow-y: auto;
+            flex-shrink: 0; /* Empêche la sidebar de rétrécir */
+        }
+
+        /* En-tête Sidebar */
+        .sidebar-header { margin-bottom: 30px; }
+        .sidebar-title {
+            font-family: 'Montserrat', sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--primary-text);
+            margin: 0 0 10px 0; letter-spacing: -0.5px; line-height: 1.2;
+        }
+        .sidebar-subtitle { font-size: 0.95rem; color: var(--secondary-text); line-height: 1.5; }
+
+        /* Sélecteur de Risques */
+        .risk-selector { display: flex; flex-direction: column; gap: 12px; }
+        
+        .risk-item {
+            display: flex; align-items: center; padding: 12px 15px; border-radius: 12px;
+            background: #f8f9fa; border: 2px solid transparent; cursor: pointer; 
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        /* Effet Hover & Active */
+        .risk-item:hover { background: #eef2f5; transform: translateX(5px); }
+        .risk-item.active { 
+            background: white; 
+            border-color: var(--accent-color); 
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.15); 
+        }
+
+        /* Icônes dans le menu */
+        .risk-icon { 
+            width: 36px; height: 36px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 15px; font-size: 1.1rem; color: white; flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .risk-name { font-weight: 600; color: var(--primary-text); font-size: 0.95rem; }
+
+        /* Application des couleurs aux icônes */
+        .risk-item[data-risk="inondation"] .risk-icon { background: var(--col-inondation); }
+        .risk-item[data-risk="radon"] .risk-icon { background: var(--col-radon); }
+        .risk-item[data-risk="mouvement"] .risk-icon { background: var(--col-mouvement); }
+        .risk-item[data-risk="seisme"] .risk-icon { background: var(--col-seisme); }
+        .risk-item[data-risk="arrete"] .risk-icon { background: var(--col-arrete); }
+
+        /* --- LÉGENDE DYNAMIQUE --- */
+        .legend-container { 
+            margin-top: 40px; 
+            padding-top: 20px; 
+            border-top: 1px solid #eee; 
+        }
+        .legend-title { 
+            font-size: 0.8rem; text-transform: uppercase; color: #aaa; 
+            font-weight: 700; margin-bottom: 15px; letter-spacing: 1px; 
+        }
+        
+        .legend-row { display: flex; align-items: center; margin-bottom: 12px; color: #555; font-size: 0.9rem; }
+        .legend-circle { 
+            border-radius: 50%; display: inline-block; margin-right: 12px; 
+            border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0;
+        }
+
+        /* --- ACCORDÉON DÉTAILS (Bas de page) --- */
+        .details-wrapper { margin-top: auto; padding-top: 20px; } /* Pousse vers le bas */
+        
+        .details-toggle {
+            padding: 12px; text-align: center; color: var(--secondary-text); 
+            cursor: pointer; font-size: 0.9rem; font-weight: 500;
+            border-radius: 8px; background: #f9f9f9;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all 0.2s;
+        }
+        .details-toggle:hover { background: #e0e0e0; color: var(--primary-text); }
+        
+        .details-panel {
+            display: none; /* Caché par défaut */
+            background: #fff; padding: 15px; border-radius: 8px; 
+            font-size: 0.85rem; color: #666; margin-top: 10px; line-height: 1.6;
+            border: 1px solid #eee;
+        }
+        .details-panel.open { display: block; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+        /* --- CARTE --- */
+        #map { flex: 1; height: 100%; z-index: 1; background: #e5e9ec; }
+
+        /* --- CUSTOM POPUP LEAFLET --- */
+        .leaflet-popup-content-wrapper { 
+            border-radius: 12px !important; box-shadow: 0 10px 30px rgba(0,0,0,0.2) !important; padding: 0 !important; overflow: hidden; 
+        }
+        .leaflet-popup-content { margin: 0 !important; width: 260px !important; }
+        .leaflet-container a.leaflet-popup-close-button { color: white !important; top: 10px; right: 10px; font-size: 18px; }
+
+        .custom-popup-header { background: #333; color: white; padding: 15px; font-family: 'Montserrat'; font-size: 1rem; font-weight: 700; }
+        .custom-popup-body { padding: 15px; background: white; }
+        .popup-stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; color: #555; }
+        .popup-stat-val { font-weight: 700; color: #222; }
+
+    </style>
+</head>
+<body>
+
+    <div id="layout-container">
+        
+        <div class="sidebar">
+            
+            <div class="sidebar-header">
+                <div class="sidebar-title">Risques Naturels</div>
+                <div class="sidebar-subtitle">
+                    Visualisez l'intensité des aléas par département (nombre de communes soumises au risque).
+                </div>
+            </div>
+
+            <div class="risk-selector">
+                <div class="risk-item active" onclick="changeRisk('inondation')" data-risk="inondation">
+                    <div class="risk-icon"><i class="fa-solid fa-water"></i></div>
+                    <div class="risk-name">Inondation</div>
+                </div>
+                <div class="risk-item" onclick="changeRisk('seisme')" data-risk="seisme">
+                    <div class="risk-icon"><i class="fa-solid fa-house-crack"></i></div>
+                    <div class="risk-name">Sismique</div>
+                </div>
+                <div class="risk-item" onclick="changeRisk('mouvement')" data-risk="mouvement">
+                    <div class="risk-icon"><i class="fa-solid fa-hill-rockslide"></i></div>
+                    <div class="risk-name">Mouvements de terrain</div>
+                </div>
+                <div class="risk-item" onclick="changeRisk('radon')" data-risk="radon">
+                    <div class="risk-icon"><i class="fa-solid fa-wind"></i></div>
+                    <div class="risk-name">Radon</div>
+                </div>
+                <div class="risk-item" onclick="changeRisk('arrete')" data-risk="arrete">
+                    <div class="risk-icon"><i class="fa-solid fa-file-contract"></i></div>
+                    <div class="risk-name">Arrêtés Cat. Nat.</div>
+                </div>
+            </div>
+
+            <div class="legend-container" id="legend-content">
+                </div>
+
+            <div class="details-wrapper">
+                <div class="details-toggle" onclick="toggleDetails()">
+                    <span><i class="fa-solid fa-circle-info"></i> Comprendre les données</span>
+                    <i class="fa-solid fa-chevron-down" id="chevron-icon"></i>
+                </div>
+                <div class="details-panel" id="details-text">
+                    <p><strong>Source :</strong> Observatoire des Territoires (2024).</p>
+                    <p>Les cercles représentent le nombre absolu de communes identifiées comme étant "à risque" au sein de chaque département.</p>
+                    <p>Plus le cercle est grand, plus le nombre de communes concernées est important.</p>
+                </div>
+            </div>
+
+        </div>
+
+        <div id="map"></div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // ==========================================
+        // 1. DONNÉES (INTEGRÉES POUR L'EXEMPLE)
+        // ==========================================
+        // REMPLACE tout ce bloc "var centroide = ..." par ton fichier JSON complet si tu veux.
+        // Sinon, assure-toi que ton fichier "CENTROIDE.json" est bien chargé.
+        var centroide = {
+            "type": "FeatureCollection",
+            "features": [
+                { "type": "Feature", "properties": { "fid": 1.0, "nom": "ARDECHE", "code_insee": "07", "Seveso 202": 4, "Risque_ind": 4, "Radon": 0, "Inondation": 152, "Mouvement": 204, "Séisme": 335, "Nucléaire": 22, "Naturelles": 3112 }, "geometry": { "type": "Point", "coordinates": [ 4.424661523677651, 44.751832577362698 ] } },
+                { "type": "Feature", "properties": { "fid": 2.0, "nom": "PUY-DE-DOME", "code_insee": "63", "Seveso 202": 9, "Risque_ind": 463, "Radon": 463, "Inondation": 463, "Mouvement": 463, "Séisme": 463, "Nucléaire": 0, "Naturelles": 3764 }, "geometry": { "type": "Point", "coordinates": [ 3.140918707559541, 45.725691143174544 ] } },
+                { "type": "Feature", "properties": { "fid": 3.0, "nom": "SEINE-MARITIME", "code_insee": "76", "Seveso 202": 73, "Risque_ind": 87, "Radon": 0, "Inondation": 29, "Mouvement": 664, "Séisme": 0, "Nucléaire": 206, "Naturelles": 4602 }, "geometry": { "type": "Point", "coordinates": [ 1.027507186328194, 49.655057486901228 ] } },
+                { "type": "Feature", "properties": { "fid": 4.0, "nom": "CHARENTE-MARITIME", "code_insee": "17", "Seveso 202": 14, "Risque_ind": 0, "Radon": 0, "Inondation": 100, "Mouvement": 416, "Séisme": 462, "Nucléaire": 1, "Naturelles": 5813 }, "geometry": { "type": "Point", "coordinates": [ -0.677378662531363, 45.773811879516565 ] } },
+                { "type": "Feature", "properties": { "fid": 5.0, "nom": "PARIS", "code_insee": "75", "Seveso 202": 0, "Risque_ind": 0, "Radon": 0, "Inondation": 1, "Mouvement": 0, "Séisme": 0, "Nucléaire": 0, "Naturelles": 22 }, "geometry": { "type": "Point", "coordinates": [ 2.342927113962042, 48.856618508065509 ] } },
+                { "type": "Feature", "properties": { "fid": 6.0, "nom": "SARTHE", "code_insee": "72", "Seveso 202": 10, "Risque_ind": 5, "Radon": 49, "Inondation": 0, "Mouvement": 7, "Séisme": 246, "Nucléaire": 0, "Naturelles": 2279 }, "geometry": { "type": "Point", "coordinates": [ 0.222374413411394, 47.994529325689705 ] } },
+                { "type": "Feature", "properties": { "fid": 13.0, "nom": "DORDOGNE", "code_insee": "24", "Seveso 202": 9, "Risque_ind": 10, "Radon": 54, "Inondation": 232, "Mouvement": 500, "Séisme": 83, "Nucléaire": 0, "Naturelles": 6068 }, "geometry": { "type": "Point", "coordinates": [ 0.741306898134572, 45.104264819944262 ] } },
+                { "type": "Feature", "properties": { "fid": 14.0, "nom": "RHONE", "code_insee": "69", "Seveso 202": 45, "Risque_ind": 25, "Radon": 266, "Inondation": 227, "Mouvement": 214, "Séisme": 266, "Nucléaire": 5, "Naturelles": 4241 }, "geometry": { "type": "Point", "coordinates": [ 4.64139967284635, 45.870401532469806 ] } }
+                // ... (Pour voir TOUS les points, il faut que tu mettes tout ton JSON ici ou que tu le charges)
+            ]
+        };
+
+        // ==========================================
+        // 2. CONFIGURATION LOGIQUE
+        // ==========================================
+        const CONFIG = {
+            'inondation': { 
+                label: 'Inondation', 
+                color: '#5B7687', 
+                field: 'Inondation', // Nom exact dans ton JSON 
+                max: 600 // Valeur max pour échelle (approximatif)
+            },
+            'seisme': { 
+                label: 'Risque Sismique', 
+                color: '#CC7367', 
+                field: 'Séisme', // Attention à l'accent dans ton JSON
+                max: 700 
+            },
+            'mouvement': { 
+                label: 'Mouvements Terrain', 
+                color: '#C0956D', 
+                field: 'Mouvement', 
+                max: 700 
+            },
+            'radon': { 
+                label: 'Radon', 
+                color: '#917180', 
+                field: 'Radon', 
+                max: 500 
+            },
+            'arrete': { 
+                label: 'Arrêtés Cat. Nat.', 
+                color: '#4169E1', 
+                field: 'Naturelles', 
+                max: 8500 
+            }
+        };
+
+        let map;
+        let currentGeoJsonLayer = null;
+        let activeRiskKey = 'inondation';
+
+        // ==========================================
+        // 3. FONCTIONS PRINCIPALES
+        // ==========================================
+
+        // Initialisation
+        function initMap() {
+            // Fond de carte clair (CartoDB Positron)
+            map = L.map('map', { zoomControl: false }).setView([46.6, 2.5], 6);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap &copy; CARTO',
+                maxZoom: 19
+            }).addTo(map);
+            
+            L.control.zoom({ position: 'topright' }).addTo(map);
+
+            // Charger le premier risque
+            loadRiskLayer('inondation');
+        }
+
+        // Changer de Risque
+        function changeRisk(riskKey) {
+            activeRiskKey = riskKey;
+
+            // Mise à jour visuelle des boutons
+            document.querySelectorAll('.risk-item').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.risk-item[data-risk="${riskKey}"]`).classList.add('active');
+
+            // Recharger la carte et la légende
+            loadRiskLayer(riskKey);
+        }
+
+        // Charger la couche GeoJSON
+        function loadRiskLayer(key) {
+            // Supprimer l'ancienne couche si elle existe
+            if (currentGeoJsonLayer) map.removeLayer(currentGeoJsonLayer);
+
+            const conf = CONFIG[key];
+
+            currentGeoJsonLayer = L.geoJSON(centroide, {
+                pointToLayer: function(feature, latlng) {
+                    // Récupérer la valeur
+                    const val = feature.properties[conf.field] || 0;
+                    // Calculer rayon
+                    const radius = calculateRadius(val, conf.max);
+                    
+                    if(radius <= 0) return null; // Ne pas afficher si 0
+
+                    return L.circleMarker(latlng, {
+                        radius: radius,
+                        fillColor: conf.color,
+                        color: 'white',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+                },
+                onEachFeature: function(feature, layer) {
+                    const p = feature.properties;
+                    const val = p[conf.field] || 0;
+
+                    // Contenu Popup Stylisé
+                    const popupContent = `
+                        <div class="custom-popup-header" style="background:${conf.color}">
+                            ${p.nom} (${p.code_insee})
+                        </div>
+                        <div class="custom-popup-body">
+                            <div class="popup-stat-row">
+                                <span>Type de risque :</span> <strong>${conf.label}</strong>
+                            </div>
+                            <div class="popup-stat-row">
+                                <span>Communes touchées :</span> <span class="popup-stat-val" style="color:${conf.color}">${val}</span>
+                            </div>
+                        </div>
+                    `;
+                    layer.bindPopup(popupContent);
+
+                    // Interactions survol
+                    layer.on({
+                        mouseover: function(e) {
+                            var l = e.target;
+                            l.setStyle({ weight: 3, color: '#333', fillOpacity: 1 });
+                            l.openPopup();
+                        },
+                        mouseout: function(e) {
+                            var l = e.target;
+                            l.setStyle({ weight: 1, color: 'white', fillOpacity: 0.8 });
+                            l.closePopup();
+                        }
+                    });
+                }
+            }).addTo(map);
+
+            updateLegend(key);
+        }
+
+        // Calcul mathématique du rayon
+        function calculateRadius(val, max) {
+            if(!val) return 0;
+            // Echelle entre 4px et 35px
+            const minPx = 4;
+            const maxPx = 35;
+            // Formule simple linéaire (peut être racine carrée pour plus de précision surface)
+            // let r = minPx + (Math.sqrt(val) / Math.sqrt(max)) * (maxPx - minPx);
+            let r = minPx + (val / max) * (maxPx - minPx);
+            return r;
+        }
+
+        // Mettre à jour la légende HTML
+        function updateLegend(key) {
+            const conf = CONFIG[key];
+            const max = conf.max;
+            const steps = [Math.round(max), Math.round(max/2), Math.round(max/10)];
+            
+            let html = `<div class="legend-title">Légende : ${conf.label}</div>`;
+            
+            steps.forEach(val => {
+                const r = calculateRadius(val, max) * 2; // Diamètre
+                html += `
+                    <div class="legend-row">
+                        <span class="legend-circle" style="width:${r}px; height:${r}px; background:${conf.color}; opacity:0.8;"></span>
+                        <span>~ ${val} Communes</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('legend-content').innerHTML = html;
+        }
+
+        // Toggle Accordéon
+        function toggleDetails() {
+            const panel = document.getElementById('details-text');
+            const icon = document.getElementById('chevron-icon');
+            
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+            } else {
+                panel.style.display = "block";
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+            }
+        }
+
+        // Lancement
+        window.onload = initMap;
+
+    </script>
+    
+    <script src="CENTROIDE.json"></script> 
+
+</body>
+</html>
