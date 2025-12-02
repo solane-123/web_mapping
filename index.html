@@ -7,147 +7,236 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CSS GENERAL --- */
+        /* --- 1. CONFIGURATION DA MODERNE --- */
         :root {
-            --inondation: #3A6EA5; --seisme: #B23A48; --mouvement: #8C6A43;
-            --nucleaire: #5A5A5A; --industriel: #6B8E23; --radon: #6A4C93;
-            --text-color: #333;
+            /* Couleurs Modernes */
+            --primary-nat: #2ecc71;   /* Vert émeraude */
+            --secondary-nat: #27ae60;
+            --gradient-nat: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); /* Bleu Océan */
+            
+            --primary-tech: #e74c3c;  /* Rouge Alizarin */
+            --secondary-tech: #c0392b;
+            --gradient-tech: linear-gradient(135deg, #434343 0%, black 100%); /* Industriel Sombre */
+
+            --text-dark: #2c3e50;
+            --text-light: #ecf0f1;
+            --bg-page: #f4f7f6;
         }
-        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; background-color: #f8f9fa; color: var(--text-color); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        /* HEADER */
-        header { background-color: white; padding: 0 25px; height: 65px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
-        .logo-area { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.3rem; color: #2c3e50; }
-        .nav-tabs { display: flex; gap: 15px; height: 100%; }
-        .nav-btn { background: none; border: none; height: 100%; padding: 0 15px; cursor: pointer; font-size: 0.95rem; color: #666; font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.3s; }
-        .nav-btn:hover { background: #f9f9f9; }
-        .nav-btn.active-tab { color: var(--inondation); border-bottom: 3px solid var(--inondation); font-weight: bold; }
+        body { 
+            margin: 0; padding: 0; 
+            font-family: 'Roboto', sans-serif; 
+            background-color: var(--bg-page); 
+            color: var(--text-dark); 
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden; 
+        }
 
-        /* VUES */
-        .view-section { display: none; flex: 1; height: calc(100vh - 65px); overflow: hidden; }
+        /* --- HEADER EPURE --- */
+        header { 
+            background-color: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px);
+            padding: 0 40px; height: 70px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+            display: flex; align-items: center; justify-content: space-between; z-index: 1000; 
+        }
+        .logo-area { 
+            display: flex; align-items: center; gap: 12px; 
+            font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 1.4rem; 
+            color: var(--text-dark); letter-spacing: -0.5px;
+        }
+        .nav-tabs { display: flex; gap: 30px; height: 100%; }
+        .nav-btn { 
+            background: none; border: none; height: 100%; padding: 0 5px; 
+            cursor: pointer; font-size: 0.9rem; color: #7f8c8d; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 3px solid transparent; transition: all 0.3s; 
+        }
+        .nav-btn:hover { color: var(--text-dark); }
+        .nav-btn.active-tab { color: #2980b9; border-bottom: 3px solid #2980b9; }
+
+        /* --- VUES --- */
+        .view-section { display: none; flex: 1; height: calc(100vh - 70px); overflow: hidden; position: relative; }
         .view-section.visible { display: flex; }
 
-        /* ACCUEIL */
-        #view-grid { padding: 40px; overflow-y: auto; flex-direction: column; align-items: center; background: white; }
-        .section-title { width: 100%; max-width: 1000px; font-size: 1.5rem; color: #2c3e50; margin: 40px 0 20px 0; border-left: 5px solid #ccc; padding-left: 15px; display: flex; align-items: center; gap: 10px; }
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px; width: 100%; max-width: 1000px; }
-        .card { background: white; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; transition: all 0.3s ease; border: 1px solid #eee; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
-        .card-icon { width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; }
-        .big-map-btn { width: 100%; max-width: 1000px; padding: 20px; margin-bottom: 10px; border-radius: 10px; border: none; cursor: pointer; color: white; font-size: 1.1rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
-        .big-map-btn:hover { transform: scale(1.01); }
+        /* --- NOUVELLE VUE ACCUEIL (SPLIT SCREEN) --- */
+        #view-grid { 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            background: white;
+            padding: 0 20px;
+        }
 
-        /* CARTE PRINCIPALE (Accueil) */
-        #view-map { flex-direction: row; position: relative; }
-        .sidebar-controls { width: 280px; background: white; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 500; display: flex; flex-direction: column; }
-        .sidebar-header { font-size: 1.1rem; font-weight: bold; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
-        .risk-toggle { display: flex; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; color: #444; }
-        .risk-toggle:hover { background: #f5f5f5; }
-        .chk-box { width: 18px; height: 18px; border: 2px solid #ddd; border-radius: 4px; margin-right: 12px; display: flex; align-items: center; justify-content: center; }
-        .risk-toggle.active .chk-box { border-color: transparent; color: white; }
-        .info-panel-main { position: absolute; right: 20px; top: 20px; bottom: 40px; width: 300px; background: white; border-radius: 12px; box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000; display: flex; flex-direction: column; transition: transform 0.3s ease; }
-        .info-panel-main.closed { transform: translateX(340px); }
-        .info-header { padding: 15px 20px; border-top-left-radius: 12px; border-top-right-radius: 12px; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .info-content { padding: 20px; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; color: #555; }
-        .info-toggle-btn { position: absolute; right: 20px; top: 20px; width: 40px; height: 40px; background: white; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 999; display: none; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #333; }
-        .info-toggle-btn.visible { display: flex; }
+        .hero-title {
+            text-align: center; margin-bottom: 50px; animation: fadeInDown 0.8s ease-out;
+        }
+        .hero-title h1 {
+            font-family: 'Montserrat', sans-serif; font-size: 3rem; margin: 0; color: var(--text-dark);
+        }
+        .hero-title p {
+            font-size: 1.2rem; color: #7f8c8d; margin-top: 10px; font-weight: 300;
+        }
+
+        .choice-container {
+            display: flex; gap: 40px; width: 100%; max-width: 1200px; height: 450px;
+            perspective: 1000px;
+        }
+
+        .hero-card {
+            flex: 1;
+            position: relative;
+            border-radius: 30px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; color: white;
+        }
+
+        /* Style Naturel */
+        .hero-card.nat { background: linear-gradient(135deg, #00B4DB 0%, #0083B0 100%); }
+        /* Style Technologique */
+        .hero-card.tech { background: linear-gradient(135deg, #232526 0%, #414345 100%); }
+
+        .hero-card::before {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.3));
+            z-index: 1; transition: opacity 0.3s;
+        }
+
+        .hero-card:hover { transform: translateY(-15px) scale(1.02); box-shadow: 0 30px 60px rgba(0,0,0,0.2); }
+        .hero-card:hover .card-icon { transform: scale(1.1) rotate(5deg); }
+
+        .card-content { position: relative; z-index: 2; padding: 40px; }
+        .card-icon { font-size: 5rem; margin-bottom: 20px; transition: transform 0.4s; text-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .card-title { font-family: 'Montserrat', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
+        .card-desc { font-size: 1.1rem; font-weight: 300; opacity: 0.9; line-height: 1.5; }
         
-        #map { flex: 1; height: 100%; transition: background-color 0.3s; }
-        #external-frame-container { flex: 1; height: 100%; display: none; }
-        #external-frame-container iframe { width: 100%; height: 100%; border: none; }
+        .card-btn {
+            margin-top: 30px; padding: 12px 30px;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 50px; color: white; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;
+            backdrop-filter: blur(5px); transition: background 0.3s;
+        }
+        .hero-card:hover .card-btn { background: white; color: #333; }
 
-        /* VUE DETAIL */
+        /* Animation d'entrée */
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* --- VUE CARTE (Plein écran) --- */
+        #view-map { flex-direction: row; position: relative; width: 100%; height: 100%; }
+        /* Sidebar masquée */
+        .sidebar-controls { display: none; }
+        
+        /* Iframe & Map Containers */
+        #map { flex: 1; height: 100%; display: none; }
+        #external-frame-container { flex: 1; height: 100%; display: none; background: #e0e0e0; }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* --- VUE DETAIL --- */
         #view-detail { flex-direction: column; overflow-y: auto; background: white; }
         
-        /* Layout Carte (Split) - Utilisé pour Industriel */
-        .split-layout { display: flex; height: calc(100vh - 120px); }
-        .left-map-area { flex: 2; position: relative; border-right: 2px solid #ddd; }
-        .right-info-area { flex: 1; overflow-y: auto; padding: 20px; background: #fff; }
+        /* Layout Carte Inondation (SCROLL VERTICAL) */
+        .vertical-layout-map {
+            width: 100%;
+            height: 85vh; 
+            position: relative;
+            border-bottom: 5px solid #eee;
+        }
+        .vertical-layout-content {
+            padding: 60px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+        }
         
-        /* Layout Carte (Plein écran Haut + Bas) - Utilisé pour Inondation */
-        .full-map-container { width: 100%; height: 75vh; border-bottom: 2px solid #ddd; }
-        .bottom-content { padding: 40px; display: flex; gap: 40px; flex-wrap: wrap; max-width: 1400px; margin: 0 auto; }
-        .bottom-col { flex: 1; min-width: 300px; }
+        /* Layout Carte Industriel (SPLIT) */
+        .split-layout { display: flex; height: calc(100vh - 70px); }
+        .left-map-area { flex: 65; position: relative; border-right: 1px solid #ddd; } /* 65% largeur */
+        .right-info-area { flex: 35; overflow-y: auto; padding: 40px; background: #fff; } /* 35% largeur */
 
-        /* IFRAME GÉNÉRAL */
-        iframe { width: 100%; height: 100%; border: none; }
+        /* Header Detail */
+        .detail-header {
+            padding: 20px 40px; color: white; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); z-index: 10;
+        }
+        .back-btn {
+            background: rgba(255,255,255,0.9); border: none; padding: 10px 20px; 
+            border-radius: 30px; font-weight: bold; cursor: pointer; transition: transform 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .back-btn:hover { transform: translateX(-3px); }
+
+        /* Timeline Style */
+        .timeline-item { padding-left: 25px; position: relative; margin-bottom: 30px; }
+        .timeline-item::before {
+            content: ''; position: absolute; left: 0; top: 5px; width: 12px; height: 12px; 
+            border-radius: 50%; background: currentColor; border: 3px solid white; box-shadow: 0 0 0 1px #ddd;
+        }
+        .timeline-year { font-family: 'Montserrat', sans-serif; font-size: 1.2rem; font-weight: 800; display: block; margin-bottom: 5px; }
+        .timeline-content { font-size: 0.95rem; color: #555; line-height: 1.5; }
+
+        /* Scroll Indicator */
+        .scroll-indicator {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: white; padding: 10px 25px; border-radius: 30px;
+            font-size: 0.9rem; animation: float 2s infinite; pointer-events: none;
+        }
+        @keyframes float { 0%, 100% {transform:translate(-50%,0);} 50% {transform:translate(-50%,-10px);} }
+
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo-area">
-            <i class="fa-solid fa-layer-group" style="color: var(--inondation);"></i>
+            <i class="fa-solid fa-earth-europe" style="color: #2980b9;"></i>
             <span>Risques France</span>
         </div>
         <nav class="nav-tabs">
             <button class="nav-btn active-tab" onclick="switchView('grid')">Accueil</button>
             <button class="nav-btn" onclick="openMap('naturel')">Carte Naturelle</button>
-            <button class="nav-btn" onclick="openMap('technique')">Carte Technique</button>
+            <button class="nav-btn" onclick="openMap('technique')">Carte Technologique</button>
         </nav>
     </header>
 
     <section id="view-grid" class="view-section visible">
-        <button class="big-map-btn" style="background: linear-gradient(to right, #3A6EA5, #8C6A43);" onclick="openMap('naturel')">
-            <span><i class="fa-solid fa-leaf"></i> Accéder à la Carte des Risques Naturels</span>
-            <i class="fa-solid fa-arrow-right"></i>
-        </button>
-        <button class="big-map-btn" style="background: linear-gradient(to right, #5A5A5A, #6B8E23);" onclick="openMap('technique')">
-            <span><i class="fa-solid fa-industry"></i> Accéder à la Carte des Risques Techniques</span>
-            <i class="fa-solid fa-arrow-right"></i>
-        </button>
-        <div class="section-title" style="border-color: var(--inondation);">Dossiers Naturels</div>
-        <div class="grid-container">
-            <div class="card" onclick="openDetail('inondation')">
-                <div class="card-icon" style="background-color: var(--inondation);"><i class="fa-solid fa-water"></i></div>
-                <h3>Inondations</h3>
+        
+        <div class="hero-title">
+            <h1>Observatoire des Risques</h1>
+            <p>Plateforme nationale de visualisation des aléas</p>
+        </div>
+
+        <div class="choice-container">
+            <div class="hero-card nat" onclick="openMap('naturel')">
+                <div class="card-content">
+                    <div class="card-icon"><i class="fa-solid fa-cloud-showers-heavy"></i></div>
+                    <div class="card-title">Risques Naturels</div>
+                    <div class="card-desc">Inondations, Séismes, Mouvements de terrain, Radon...</div>
+                    <div class="card-btn">Explorer la carte</div>
+                </div>
             </div>
-            <div class="card" onclick="openDetail('seisme')"><div class="card-icon" style="background-color: var(--seisme);"><i class="fa-solid fa-house-crack"></i></div><h3>Séismes</h3></div>
-            <div class="card" onclick="openDetail('mouvement')"><div class="card-icon" style="background-color: var(--mouvement);"><i class="fa-solid fa-hill-rockslide"></i></div><h3>Mouvements</h3></div>
-            <div class="card" onclick="openDetail('radon')"><div class="card-icon" style="background-color: var(--radon);"><i class="fa-solid fa-wind"></i></div><h3>Radon</h3></div>
+
+            <div class="hero-card tech" onclick="openMap('technique')">
+                <div class="card-content">
+                    <div class="card-icon"><i class="fa-solid fa-industry"></i></div>
+                    <div class="card-title">Risques Technologiques</div>
+                    <div class="card-desc">Installations classées Seveso, Centrales Nucléaires, Pollution...</div>
+                    <div class="card-btn">Explorer la carte</div>
+                </div>
+            </div>
         </div>
-        <div class="section-title" style="border-color: var(--nucleaire);">Dossiers Techniques</div>
-        <div class="grid-container">
-            <div class="card" onclick="openDetail('industriel')"><div class="card-icon" style="background-color: var(--industriel);"><i class="fa-solid fa-industry"></i></div><h3>Industriel</h3></div>
-            <div class="card" onclick="openDetail('nucleaire')"><div class="card-icon" style="background-color: var(--nucleaire);"><i class="fa-solid fa-radiation"></i></div><h3>Nucléaire</h3></div>
-        </div>
+
     </section>
 
     <section id="view-map" class="view-section">
-        <aside class="sidebar-controls">
-            <div id="map-title" class="sidebar-header">Carte</div>
-            
-            <div id="group-naturel">
-                <div class="risk-toggle" id="btn-inondation" onclick="toggleLayer('inondation', '#3A6EA5')"><div class="chk-box"></div> Inondations</div>
-                <div class="risk-toggle" id="btn-seisme" onclick="toggleLayer('seisme', '#B23A48')"><div class="chk-box"></div> Séismes</div>
-                <div class="risk-toggle" id="btn-mouvement" onclick="toggleLayer('mouvement', '#8C6A43')"><div class="chk-box"></div> Mouvements</div>
-                <div class="risk-toggle" id="btn-radon" onclick="toggleLayer('radon', '#6A4C93')"><div class="chk-box"></div> Radon</div>
-            </div>
-
-            <div id="group-technique">
-                <p style="font-size:0.9rem; color:#666; margin-top:10px;">
-                    Cette carte interactive présente l'ensemble des installations classées (Seveso) et nucléaires.
-                </p>
-                <div class="risk-toggle" id="btn-nucleaire" style="display:none;"><div class="chk-box"></div> Nucléaire</div>
-                <div class="risk-toggle" id="btn-industriel" style="display:none;"><div class="chk-box"></div> Industriel</div>
-            </div>
-            
-            <button id="reset-btn" onclick="resetMap()" style="margin-top:auto; padding:10px; cursor:pointer; background:#fff; border:1px solid #ddd;">Tout masquer</button>
-        </aside>
-
-        <div id="map"></div>
-
-        <div id="external-frame-container">
+        <aside class="sidebar-controls"></aside>
+        <div id="map"></div> <div id="external-frame-container">
             <iframe id="main-map-frame" src=""></iframe>
-        </div>
-
-        <div id="info-toggle" class="info-toggle-btn" onclick="toggleInfoPanel(true)"><i class="fa-solid fa-info"></i></div>
-        <div id="info-panel" class="info-panel-main">
-            <div id="info-header" class="info-header"><span id="info-title-text">Information</span><i class="fa-solid fa-times" style="cursor:pointer" onclick="toggleInfoPanel(false)"></i></div>
-            <div id="info-content" class="info-content"></div>
         </div>
     </section>
 
@@ -158,35 +247,23 @@
 
     <script>
         // --- DONNEES ---
-        const mapData = {
-            'inondation': [{loc:[48.85, 2.35], r:15000}], 
-            'seisme': [{loc:[43.71, 7.26], r:30000}], 
-            'mouvement': [{loc:[45.76, 4.83], r:10000}], 
-            'radon': [{loc:[48.11, -1.67], r:60000}], 
-            'nucleaire': [{loc:[47.72, 1.57], r:50000}], 
-            'industriel': [{loc:[49.44, 1.09], r:15000}] 
-        };
-
         const detailsContent = {
             'inondation': { 
-                title: "Inondations", color: "#3A6EA5", icon: "fa-water", 
+                title: "Inondations", color: "#0083B0", icon: "fa-water", 
                 desc: "Carte interactive et comparative des risques d'inondation en France.",
                 timeline: [{year:"2017", t:"Données Inondation", d:"Analyse nationale."}],
                 chartTitle: "Coût (Mrd €)", chartType: 'line', chartLabels: ['2010', '2015', '2020', '2023'], chartData: [1.2, 0.8, 1.5, 1.1]
             },
             'industriel': { 
-                title: "Risques Technologiques", color: "#2c3e50", icon: "fa-industry", 
+                title: "Risques Technologiques", color: "#414345", icon: "fa-industry", 
                 desc: "Cartographie globale des risques technologiques et industriels (Sites Seveso, etc.).",
                 timeline: [{year:"2001", t:"Explosion AZF", d:"Plus grave accident industriel."}, {year:"2019", t:"Lubrizol Rouen", d:"Incendie majeur."}],
                 chartTitle: "Sites Seveso", chartType: 'bar', chartLabels: ['Seuil Haut', 'Seuil Bas'], chartData: [700, 600]
-            },
-            'seisme': { title: "Risque Sismique", color: "#B23A48", icon: "fa-house-crack", desc: "La France a une sismicité modérée.", timeline: [{year:"1909", t:"Lambesc", d:""}] },
-            'nucleaire': { title: "Nucléaire", color: "#27ae60", icon: "fa-radiation", desc: "Centrales Nucléaires.", timeline: [{year:"1969", t:"St-Laurent", d:""}] },
-            'mouvement': { title: "Mouvements", color: "#8C6A43", icon: "fa-hill-rockslide", desc: "Glissements.", timeline: [{year:"1953", t:"Harmalière", d:""}] },
-            'radon': { title: "Radon", color: "#8e44ad", icon: "fa-wind", desc: "Gaz naturel.", timeline: [{year:"2018", t:"Zonage", d:""}] }
+            }
+            // (Autres types supprimés car non accessibles depuis l'accueil simplifié, mais ajoutables ici)
         };
 
-        var map, activeLayers = {}, currentChart = null; 
+        var currentChart = null; 
 
         // --- NAVIGATION ---
         function switchView(name) {
@@ -199,108 +276,92 @@
             if(name === 'grid') document.querySelectorAll('.nav-btn')[0].classList.add('active-tab');
         }
 
-        // --- GESTION DES CARTES PRINCIPALES (ONGLETS) ---
+        // --- OUVERTURE CARTES PRINCIPALES ---
         function openMap(mode) {
             switchView('map');
             const navBtns = document.querySelectorAll('.nav-btn');
-            
-            const mapDiv = document.getElementById('map');
-            const frameDiv = document.getElementById('external-frame-container');
             const iframe = document.getElementById('main-map-frame');
-            const sidebar = document.querySelector('.sidebar-controls');
-            const infoBtn = document.getElementById('info-toggle');
-
-            resetMap(); 
-
-            // Dans tous les cas, on veut l'iframe plein écran pour les onglets principaux
-            mapDiv.style.display = 'none';
-            frameDiv.style.display = 'block';
-            sidebar.style.display = 'none'; // Pas de sidebar
-            toggleInfoPanel(false); // Pas de panneau info
-            infoBtn.style.display = 'none';
+            
+            // Affichage Iframe
+            document.getElementById('external-frame-container').style.display = 'block';
+            document.getElementById('map').style.display = 'none'; 
 
             if (mode === 'naturel') {
-                // Lien vers la carte Naturelle (DEP_NAT)
                 iframe.src = "https://lietheo.github.io/DEP_NAT/";
                 navBtns[1].classList.add('active-tab');
             } else {
-                // Lien vers la carte Technique (DEP_TECH)
                 iframe.src = "https://lietheo.github.io/DEP_TECH/";
                 navBtns[2].classList.add('active-tab');
             }
         }
 
-        // --- GESTION DES FICHES DETAILS ---
+        // --- OUVERTURE FICHE DETAIL (Si accessible via la carte) ---
         function openDetail(key) {
             const d = detailsContent[key];
             if(!d) return;
 
             let html = `
-                <div class="detail-header" style="background:${d.color}; padding: 15px 40px; color: white; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-size: 2rem; display:inline-block; margin-right:10px;"><i class="fa-solid ${d.icon}"></i></div>
-                        <h1 style="margin:0; display:inline-block;">${d.title}</h1>
+                <div class="detail-header" style="background:${d.color};">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <i class="fa-solid ${d.icon}" style="font-size:2rem;"></i>
+                        <h1 style="margin:0; font-family:'Montserrat', sans-serif;">${d.title}</h1>
                     </div>
-                    <button class="back-btn" onclick="switchView('grid')" style="color:${d.color}; background:white; border:none; padding:8px 16px; border-radius:20px; font-weight:bold; cursor:pointer;">
+                    <button class="back-btn" onclick="switchView('grid')" style="color:${d.color}">
                         <i class="fa-solid fa-arrow-left"></i> Retour
                     </button>
                 </div>`;
 
-            // --- CAS SPECIAL 1 : INONDATION (PLEINE LARGEUR) ---
+            // CAS INONDATION (SCROLL)
             if(key === 'inondation') {
                 html += `
-                    <div class="full-map-container">
+                    <div class="vertical-layout-map">
                         <iframe src="https://lietheo.github.io/DEP_NAT/"></iframe>
+                        <div class="scroll-indicator">▼ Infos détaillées en bas</div>
                     </div>
-                    <div class="bottom-content">
-                        <div class="bottom-col">
-                            <h2 style="color:#333; margin-top:0;">Statistiques</h2>
-                            <div style="height:300px;">
-                                <canvas id="riskChart"></canvas>
+                    <div class="vertical-layout-content">
+                        <div style="display:flex; flex-wrap:wrap; gap:60px;">
+                            <div style="flex:1; min-width:350px;">
+                                <h2 style="font-family:'Montserrat'; color:${d.color}; border-bottom:2px solid #eee; padding-bottom:10px;">Statistiques</h2>
+                                <div style="height:350px; margin-top:20px;"><canvas id="riskChart"></canvas></div>
                             </div>
-                        </div>
-                        <div class="bottom-col">
-                            <h2 style="color:#333; margin-top:0;">Chronologie</h2>
-                            <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 10px;">
-                                ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 20px; padding-left: 20px; position: relative;"><div style="position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background: ${d.color}; border-radius: 50%;"></div><span style="font-weight:bold; color:${d.color}">${t.year}</span> <div style="font-weight:bold;">${t.t}</div></div>`).join('')}
+                            <div style="flex:1; min-width:350px;">
+                                <h2 style="font-family:'Montserrat'; color:${d.color}; border-bottom:2px solid #eee; padding-bottom:10px;">Historique</h2>
+                                <div style="margin-top:30px; border-left:3px solid ${d.color}; padding-left:20px;">
+                                    ${d.timeline.map(t => `
+                                        <div class="timeline-item" style="color:${d.color}">
+                                            <span class="timeline-year">${t.year}</span>
+                                            <div class="timeline-content"><strong>${t.t}</strong><br>${t.d}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
                         </div>
                     </div>`;
             } 
-            // --- CAS SPECIAL 2 : INDUSTRIEL (SPLIT VIEW) ---
+            // CAS INDUSTRIEL (SPLIT)
             else if (key === 'industriel') {
                 html += `
                     <div class="split-layout">
-                        <div class="left-map-area">
-                            <iframe src="https://lietheo.github.io/DEP_TECH/"></iframe>
-                        </div>
+                        <div class="left-map-area"><iframe src="https://lietheo.github.io/DEP_TECH/"></iframe></div>
                         <div class="right-info-area">
-                            <h2 style="color:#333; margin-top:0;">Statistiques Seveso</h2>
-                            <div style="height:250px; margin-bottom:20px;">
-                                <canvas id="riskChart"></canvas>
-                            </div>
-                            <h2 style="color:#333;">Chronologie</h2>
-                            <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 10px;">
-                                ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 20px; padding-left: 20px; position: relative;"><div style="position: absolute; left: -9px; top: 0; width: 15px; height: 15px; background: ${d.color}; border-radius: 50%;"></div><span style="font-weight:bold; color:${d.color}">${t.year}</span> <div style="font-weight:bold;">${t.t}</div></div>`).join('')}
+                            <h2 style="font-family:'Montserrat'; color:${d.color};">Statistiques</h2>
+                            <div style="height:250px; margin-bottom:40px;"><canvas id="riskChart"></canvas></div>
+                            <h2 style="font-family:'Montserrat'; color:${d.color};">Historique</h2>
+                            <div style="margin-top:20px; border-left:3px solid ${d.color}; padding-left:20px;">
+                                ${d.timeline.map(t => `
+                                    <div class="timeline-item" style="color:${d.color}">
+                                        <span class="timeline-year">${t.year}</span>
+                                        <div class="timeline-content"><strong>${t.t}</strong><br>${t.d}</div>
+                                    </div>
+                                `).join('')}
                             </div>
                         </div>
                     </div>`;
-            }
-            // --- CAS STANDARD (AUTRES) ---
-            else {
-                html += `<div style="padding:40px;">
-                    <p style="font-size:1.1rem;">${d.desc}</p>
-                    <h2 style="color:#333;">Chronologie</h2>
-                    <div class="timeline-container" style="border-left: 3px solid #eee; margin-left: 15px;">
-                        ${d.timeline.map((t, i) => `<div class="timeline-item" style="margin-bottom: 30px; padding-left: 30px; position: relative;"><span style="background:${d.color}; color:white; padding:3px 8px; border-radius:4px;">${t.year}</span> <h3 style="margin: 5px 0;">${t.t}</h3> <p>${t.d}</p></div>`).join('')}
-                    </div>
-                </div>`;
             }
 
             document.getElementById('view-detail').innerHTML = html;
             switchView('detail');
 
-            // Génération du graphique
             if (d.chartData) {
                 const ctx = document.getElementById('riskChart');
                 if(ctx) {
@@ -309,59 +370,6 @@
                 }
             }
         }
-
-        // --- AUTRES FONCTIONS GLOBALES ---
-        function toggleLayer(type, color) {
-            if(!map) return;
-            const btn = document.getElementById('btn-' + type);
-            if(!btn) return;
-            const chk = btn.querySelector('.chk-box');
-            
-            if (activeLayers[type]) {
-                map.removeLayer(activeLayers[type]);
-                delete activeLayers[type];
-                btn.classList.remove('active');
-                chk.style.backgroundColor = 'transparent';
-                chk.style.borderColor = '#ddd';
-            } else {
-                var lg = L.layerGroup();
-                (mapData[type]||[]).forEach(d => {
-                    L.circle(d.loc, {color: color, fillColor:color, fillOpacity:0.4, radius: d.r}).bindPopup(type.toUpperCase()).addTo(lg);
-                });
-                lg.addTo(map);
-                activeLayers[type] = lg;
-                btn.classList.add('active');
-                chk.style.backgroundColor = color;
-                chk.style.borderColor = color;
-            }
-        }
-
-        function resetMap() {
-            if(!map) return;
-            for (let key in activeLayers) {
-                map.removeLayer(activeLayers[key]);
-                const btn = document.getElementById('btn-' + key);
-                if(btn) {
-                    btn.classList.remove('active');
-                    btn.querySelector('.chk-box').style.backgroundColor = 'transparent';
-                }
-            }
-            activeLayers = {};
-        }
-
-        function toggleInfoPanel(show) { 
-            const panel = document.querySelector('.info-panel-main');
-            const btn = document.getElementById('info-toggle');
-            if(show) { panel.classList.remove('closed'); btn.classList.remove('visible'); } 
-            else { panel.classList.add('closed'); btn.classList.add('visible'); }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            if(document.getElementById('map')) {
-                map = L.map('map').setView([46.603354, 1.888334], 6);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-            }
-        });
     </script>
 </body>
 </html>
