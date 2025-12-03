@@ -3,544 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exposition Inondations & Chronologie</title>
+    <title>Carte des Risques Naturels</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
     <style>
         /* ============================================================
-           1. STYLES GLOBAUX & VARIABLES
+           1. DESIGN SYSTEM (DA SITE)
            ============================================================ */
         :root {
-            --color-primary: #5C7689; 
-            --color-active: #c0392b; /* Rouge harmonisé */
-            --color-line: #5C7689;
-            --color-bg: #f5f8fb;
-            --color-dot-inactive: #aaa;
+            --bg-body: #F3F4F6;
+            --surface-white: #ffffff;
+            --primary: #2563EB; /* Bleu ONR */
+            --accent: #c0392b;  /* Rouge Inondation */
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --radius-lg: 24px;
         }
 
         body { 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Helvetica Neue', Arial, sans-serif; 
-            background-color: var(--color-bg);
-            overflow-x: hidden; 
+            margin: 0; padding: 0; 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            overflow-x: hidden;
         }
 
         /* ============================================================
-           2. STYLES DE LA CARTE 
+           2. TITRE & CARTE
            ============================================================ */
         
-        #map { 
-            height: 70vh; 
-            width: 100%; 
-            /* Pas de bordure en bas ici, c'est la barre de séparation qui fera l'office */
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        /* Titre Flottant Carte */
         #map-title {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 1000;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px 20px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            text-align: center;
-            border: 1px solid #ddd;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
+            padding: 12px 30px; border-radius: 50px;
+            box-shadow: var(--shadow-card); border: 1px solid rgba(0,0,0,0.05);
+            text-align: center; width: 90%; max-width: 800px;
         }
-        #map-title h1 { margin: 0; font-size: 18px; color: #c0392b; text-transform: uppercase; letter-spacing: 1px; }
-        #map-title p { margin: 2px 0 0 0; font-size: 12px; color: #7f8c8d; }
-
-        /* Panneau Info (Survol) */
-        .info {
-            padding: 12px;
-            font: 13px/16px Arial, Helvetica, sans-serif;
-            background: rgba(255,255,255,0.96);
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            border-radius: 5px;
-            min-width: 260px;
+        #map-title h1 { 
+            margin: 0; font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; 
+            font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; 
         }
-        .info h4 { margin: 0 0 8px; color: #333; font-size: 16px; border-bottom: 2px solid #c0392b; padding-bottom: 5px; text-transform: uppercase; }
+        #map-title p { margin: 5px 0 0 0; font-size: 0.9rem; color: var(--text-muted); }
 
-        /* Tableaux */
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        .data-table th { text-align: left; color: #777; font-size: 0.9em; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
-        .data-table td { padding: 4px 0; border-bottom: 1px solid #eee; }
-        .val-zi { color: #c0392b; font-weight: bold; }
-        .val-hors { color: #2d3436; }
+        #map { 
+            height: 65vh; width: 100%; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); z-index: 1;
+        }
 
-        /* Légende */
-        .legend { line-height: 20px; color: #555; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
-        .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.8; border: 1px solid #ccc; }
-        .leaflet-control-layers { box-shadow: 0 2px 10px rgba(0,0,0,0.2); border-radius: 8px; }
+        /* Bouton Info (?) */
+        .leaflet-control-custom-info { 
+            background: white; width: 36px; height: 36px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); cursor: pointer; 
+            text-align: center; line-height: 36px; font-weight: bold; font-size: 18px; color: #444;
+            transition: background 0.2s; 
+        }
+        .leaflet-control-custom-info:hover { background: #f3f4f6; color: var(--primary); }
 
-        /* Modal Info */
-        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
-        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 25px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; }
-        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close-btn:hover { color: black; text-decoration: none; }
-        .modal-content h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
-        .modal-content a { color: #3498db; text-decoration: none; }
-        .modal-content a:hover { text-decoration: underline; }
-        .modal-content ul { list-style-type: disc; margin-left: 20px; }
+        /* MODALE INFO */
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+        .modal-content { 
+            background-color: #fff; margin: 5% auto; padding: 30px; border: none; 
+            width: 90%; max-width: 600px; border-radius: 20px; 
+            box-shadow: var(--shadow-card); font-size: 0.95rem; line-height: 1.6; 
+        }
+        .close-btn { color: #aaa; float: right; font-size: 24px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .close-btn:hover { color: var(--accent); }
+        .modal-content h2 { margin-top: 0; font-family: 'Space Grotesk'; color: var(--text-main); border-bottom: 2px solid var(--primary); padding-bottom: 15px; }
+        .modal-content a { color: var(--primary); text-decoration: none; font-weight: 500; }
 
-        /* Bouton "?" */
-        .leaflet-control-custom-info { background: white; width: 30px; height: 30px; border-radius: 4px; box-shadow: 0 1px 5px rgba(0,0,0,0.65); cursor: pointer; text-align: center; line-height: 30px; font-weight: bold; font-size: 18px; color: #444; }
-        .leaflet-control-custom-info:hover { background: #f4f4f4; color: black; }
-
+        /* LÉGENDE & INFO CARTE */
+        .info { padding: 10px; font: 13px/16px 'Inter', sans-serif; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.1); border-radius: 8px; }
+        .info h4 { margin: 0 0 5px; color: #333; font-weight: 700; }
+        .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.8; border-radius: 3px; }
 
         /* ============================================================
-           3. NOUVEAUX ÉLÉMENTS DE SÉPARATION
+           3. SÉPARATEUR & FRISE
            ============================================================ */
         
-        /* La bande rouge */
         .separator-bar {
-            width: 100%;
-            height: 8px; /* Épaisseur de la bande */
-            background-color: #c0392b; /* Le rouge de votre carte */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            position: relative;
-            z-index: 10;
+            width: 100%; height: 6px; 
+            background: linear-gradient(90deg, var(--accent), #e74c3c); 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; z-index: 10;
         }
 
-        /* Le titre de la frise */
         .frise-main-title {
-            text-align: center;
-            color: #c0392b;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            margin-top: 40px;
-            margin-bottom: 10px;
-            font-size: 24px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            text-align: center; color: var(--text-main); 
+            font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+            margin: 40px 20px 20px; font-size: 1.8rem;
         }
 
+        /* FRISE */
+        .timeline-container { width: 100%; padding: 0 5%; box-sizing: border-box; position: relative; margin-bottom: 0; }
+        .timeline { 
+            position: relative; height: 140px; padding-top: 60px; width: 100%; 
+            background: white; border-top-left-radius: var(--radius-lg); border-top-right-radius: var(--radius-lg);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.03); border: 1px solid #eee; border-bottom: none;
+        }
+        .timeline-line { position: absolute; top: 50%; left: 5%; right: 5%; height: 3px; background-color: #e5e7eb; z-index: 1; transform: translateY(-50%); }
 
-        /* ============================================================
-           4. STYLES DE LA FRISE
-           ============================================================ */
+        .event { position: absolute; top: 50%; width: 60px; transform: translate(-50%, -50%); text-align: center; z-index: 2; cursor: pointer; }
+        .event-dot { 
+            width: 14px; height: 14px; background-color: #fff; border: 3px solid #9ca3af; 
+            border-radius: 50%; margin: 0 auto; position: relative; top: -7px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        }
+        .event-date { 
+            font-family: 'Space Grotesk'; font-weight: 700; font-size: 0.9rem; color: #9ca3af; 
+            position: absolute; width: 100%; top: -35px; left: 50%; transform: translateX(-50%); 
+            transition: all 0.3s; 
+        }
+        .event[data-position="below"] .event-date { top: 25px; }
         
-        .header-title { display: flex; align-items: center; justify-content: center; margin-bottom: 40px; margin-top: 20px; height: 50px; }
-        .header-title img { height: 100%; width: auto; }
+        /* ETAT ACTIF */
+        .event:hover .event-dot { border-color: var(--accent); transform: scale(1.2); }
+        .event.active .event-dot { background-color: var(--accent); border-color: var(--accent); transform: scale(1.3); box-shadow: 0 0 0 4px rgba(192, 57, 43, 0.2); }
+        .event.active .event-date { color: var(--accent); font-size: 1.1rem; }
 
-        .timeline-container { width: 100%; padding: 0 10%; box-sizing: border-box; position: relative; }
-        .timeline { position: relative; height: 150px; padding-top: 50px; width: 100%; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); background: #fff; border-radius: 8px; }
-        .timeline-line { position: absolute; top: 50%; left: 0; right: 0; height: 4px; background-color: var(--color-line); z-index: 1; transform: translateY(-50%); }
-
-        .event { position: absolute; top: 50%; width: 80px; transform: translate(-50%, -50%); text-align: center; z-index: 2; cursor: pointer; }
-        .event-dot { width: 10px; height: 10px; background-color: var(--color-dot-inactive); border: 2px solid #fff; border-radius: 50%; margin: 0 auto; position: relative; top: -7px; transition: all 0.2s ease; }
-        .event-date { font-size: 0.8em; color: #555; position: absolute; width: 100%; top: -40px; left: 50%; transform: translateX(-50%); white-space: nowrap; transition: all 0.2s ease; }
-        .event[data-position="below"] .event-date { top: 30px; }
-        .event:hover .event-dot { background-color: var(--color-primary); transform: scale(1.3); }
-        .event.active .event-dot { width: 20px; height: 20px; background-color: var(--color-active); border-width: 4px; transform: scale(1.2); }
-        .event.active .event-date { font-size: 1em; font-weight: bold; color: var(--color-active); }
+        /* BOITE DETAILS */
+        .details-box { 
+            max-width: 1000px; margin: 0 auto 60px; padding: 40px; 
+            background-color: #fff; 
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg); /* Arrondi en bas seulement */
+            box-shadow: var(--shadow-card); 
+            display: flex; gap: 40px; border: 1px solid #eee; border-top: none;
+        }
         
-        .details-box { max-width: 900px; margin: 50px auto 50px auto; padding: 30px; background-color: #fff; border-top: 3px solid var(--color-primary); border-radius: 0 0 8px 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); min-height: 250px; display: flex; gap: 30px; }
-        .details-text { flex: 2; }
-        .details-box h3 { color: var(--color-active); margin-top: 0; border-bottom: 2px solid var(--color-bg); padding-bottom: 10px; }
-        .details-box strong { color: var(--color-primary); }
-        .details-image { flex: 1; background-color: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; height: 250px; overflow: hidden; }
-        .details-image img { width: 100%; height: 100%; object-fit: cover; }
+        .details-text { flex: 1.5; }
+        .details-box h3 { 
+            font-family: 'Space Grotesk'; font-size: 1.8rem; color: var(--accent); 
+            margin-top: 0; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee; 
+        }
+        .details-box p { margin-bottom: 15px; color: #4b5563; line-height: 1.6; }
+        .details-box strong { color: var(--text-main); font-weight: 600; }
+        
+        .details-image { 
+            flex: 1; height: 300px; border-radius: 16px; overflow: hidden; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); background: #f3f4f6;
+        }
+        .details-image img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .details-image:hover img { transform: scale(1.05); }
 
     </style>
 </head>
 <body>
 
-<div id="map-title">
-    <h1>Représentation des unités urbaines soumises à un risque d'inondation</h1>
-    <p>Comparaison socio-démographique (1999 - 2017)</p>
-</div>
-
-<div id="infoModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn" onclick="closeModal()">&times;</span>
-        <h2>Méthodologie & Sources</h2>
-        <p>Indicateurs de vulnérabilité sociale par unité urbaine et par année (1999, 2008 et 2017) en France métropolitaine, en fonction de l'exposition à l'aléa inondation.</p>
-        <p><strong>L'aléa inondation</strong> est identifié à partir de la cartographie des Territoires à Risque important d'Inondation (BD TRI) rapportage 2020 (version 2), scénario moyen (~crue centennale).<br>
-        <a href="https://www.georisques.gouv.fr/donnees/bases-de-donnees/zonages-inondation-rapportage-2020" target="_blank">Source Géorisques</a></p>
-        <p><strong>Les indicateurs de vulnérabilité sociale</strong> sont les suivants :</p>
-        <ul>
-            <li>Taux de chômage (PCT_CHOM)</li>
-            <li>Part de la population étrangère (PCT_ETR)</li>
-            <li>Part des ménages propriétaires de leur logement (PCT_PROP)</li>
-        </ul>
-        <p><em>Données utilisées dans Fujiki & Finance (2022).<br>
-        <a href="https://doi.org/10.4000/cybergeo.39179" target="_blank">Voir l'article complet (Cybergeo)</a></em></p>
-        <p style="font-size: 0.9em; color: #666;">Nous remercions K.Fujiki et O.Finance pour nous avoir transmis leurs données.</p>
+    <div id="map-title">
+        <h1>Unités urbaines & Risque Inondation</h1>
+        <p>Comparaison socio-démographique (1999 - 2017)</p>
     </div>
-</div>
 
-<div id="map"></div>
-
-<div class="separator-bar"></div>
-
-<h2 class="frise-main-title">Frises chronologique des inondations marquantes entre 1910 et 2020 en France</h2>
-
-
-<div class="timeline-container">
-    <div class="timeline" id="timeline-chart">
-        <div class="timeline-line"></div>
-        <div id="events-list"></div>
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>Méthodologie & Sources</h2>
+            <p>Indicateurs de vulnérabilité sociale par unité urbaine et par année (1999, 2008 et 2017) en France métropolitaine.</p>
+            <p><strong>Source Géorisques :</strong> Cartographie des Territoires à Risque important d'Inondation (TRI) 2020.</p>
+            <p>Données basées sur les travaux de Fujiki & Finance (2022).</p>
+        </div>
     </div>
-</div>
 
-<div class="details-box">
-    <div class="details-text">
-        <h3 id="detail-title"></h3>
-        <p><strong>Année :</strong> <span id="detail-year"></span></p>
-        <p><strong id="detail-headline"></strong></p>
-        <p id="detail-description"></p>
-        <p><strong>Impact humain :</strong> <span id="detail-impact"></span></p>
-        <p><strong>Zone touchée :</strong> <span id="detail-zone"></span></p>
+    <div id="map"></div>
+
+    <div class="separator-bar"></div>
+
+    <h2 class="frise-main-title">Chronologie des inondations majeures (1910 - 2020)</h2>
+
+    <div class="timeline-container">
+        <div class="timeline" id="timeline-chart">
+            <div class="timeline-line"></div>
+            <div id="events-list"></div>
+        </div>
     </div>
-    <div class="details-image"></div>
-</div>
 
-
-<script type="text/javascript" src="inondation_1999_wgs84.json"></script>
-<script type="text/javascript" src="inondation_2008_wgs84.json"></script>
-<script type="text/javascript" src="inondation_2017_wgs84.json"></script>
-<script type="text/javascript" src="cours_eau.json"></script>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
-<script>
-    // ####################################################################
-    // PARTIE JAVASCRIPT 1 : LA CARTE
-    // ####################################################################
-
-    // --- 1. CONFIGURATION DES FONDS ---
-    var basemapSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri'
-    });
-    
-    var basemapGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; CARTO'
-    });
-
-    // On démarre avec le Satellite
-    var map = L.map('map', {
-        center: [46.6, 2.5],
-        zoom: 6,
-        layers: [basemapGris] 
-    });
-
-    L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
-
-    // --- 2. BOUTON D'INFORMATION ---
-    var InfoControl = L.Control.extend({
-        options: {
-            position: 'topleft' 
-        },
-        onAdd: function (map) {
-            var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom-info');
-            container.innerHTML = '?'; 
-            container.title = "Informations et Sources";
-            container.onclick = function(){
-                document.getElementById("infoModal").style.display = "block";
-            }
-            return container;
-        }
-    });
-    map.addControl(new InfoControl());
-
-    function closeModal() {
-        document.getElementById("infoModal").style.display = "none";
-    }
-    window.onclick = function(event) {
-        var modal = document.getElementById("infoModal");
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    }
-
-    // --- 3. STYLE & FUNCTIONS ---
-    function getColor(d) {
-        return d > 0.50 ? '#800026' : 
-               d > 0.25 ? '#BD0026' : 
-               d > 0.15 ? '#E31A1C' : 
-               d > 0.10 ? '#FC4E2A' : 
-               d > 0.05 ? '#FD8D3C' : 
-               d > 0.02 ? '#FEB24C' : 
-               d > 0    ? '#FFEDA0' : '#CCCCCC'; 
-    }
-
-    function formatPct(val) {
-        if (val === null || val === undefined) return '<span style="color:#ccc">N/A</span>';
-        return (val * 100).toFixed(1) + '%';
-    }
-
-    function style(feature) {
-        return {
-            fillColor: getColor(feature.properties.PCT_EXPO),
-            weight: 0.5,        
-            opacity: 1,
-            color: 'black',     
-            fillOpacity: 0.7
-        };
-    }
-
-    var styleEau = { color: "#4FC3F7", weight: 0.8, opacity: 0.6 };
-    
-    var layerEau;
-    try {
-        if (typeof EAU !== 'undefined') {
-            layerEau = L.geoJSON(EAU, { style: styleEau });
-            layerEau.addTo(map);
-        }
-    } catch(e) {}
-
-    // --- INFO PANEL (Survol) ---
-    var info = L.control();
-    info.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); this.update(); return this._div; };
-    info.update = function (props) {
-        if (props) {
-            var pop = props.POP_ZI !== null ? Math.round(props.POP_ZI) : 0;
-            var html = '<h4>' + props.libuu2020 + ' (' + props.annee + ')</h4>' +
-                '<b>Exposition : ' + formatPct(props.PCT_EXPO) + ' de la population.</b><br>' +
-                '<span style="color:#777; font-size:0.9em">' + pop.toLocaleString() + ' habitants en zone inondable (ZI)</span>' +
-                '<hr style="border:0; border-top:1px solid #eee; margin:8px 0;">' +
-                '<table class="data-table">' +
-                    '<tr><th>Résidents</th><th>En ZI</th><th>Hors ZI</th></tr>' +
-                    '<tr><td>Propriétaires</td><td class="val-zi">' + formatPct(props.PCT_PROP_Z) + '</td><td class="val-hors">' + formatPct(props.PCT_PROP_H) + '</td></tr>' +
-                    '<tr><td>Étrangers</td><td class="val-zi">' + formatPct(props.PCT_ETR_ZI) + '</td><td class="val-hors">' + formatPct(props.PCT_ETR_HO) + '</td></tr>' +
-                    '<tr><td>Chômage</td><td class="val-zi">' + formatPct(props.PCT_CHOM_Z) + '</td><td class="val-hors">' + formatPct(props.PCT_CHOM_H) + '</td></tr>' +
-                '</table>' +
-                '<br><small style="color:#777">Survolez pour les détails</small>';
-            this._div.innerHTML = html;
-        } else {
-            this._div.innerHTML = '<h4>Informations unité urbaine</h4>Survolez une commune !<br>';
-        }
-    };
-    info.addTo(map);
-
-    // --- INTERACTIONS ---
-    function highlightFeature(e) {
-        var layer = e.target;
-        layer.setStyle({ weight: 2, color: 'black', fillOpacity: 0.9 });
-        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) { layer.bringToFront(); }
-        if(layerEau) layerEau.bringToFront(); 
-        info.update(layer.feature.properties);
-    }
-    function resetHighlight(e) { var layer = e.target; layer.setStyle(style(layer.feature)); info.update(); }
-    function zoomToFeature(e) { map.fitBounds(e.target.getBounds()); }
-    function onEachFeature(feature, layer) { layer.on({ mouseover: highlightFeature, mouseout: resetHighlight, click: zoomToFeature }); }
-
-    // --- CHARGEMENT DONNÉES AVEC FILTRE ---
-    function filterData(feature) {
-        return feature.properties.PCT_EXPO !== null;
-    }
-
-    try {
-        if (typeof INONDATION1999 === 'undefined') INONDATION1999 = {"type":"FeatureCollection","features":[]};
-        if (typeof INONDATION2008 === 'undefined') INONDATION2008 = {"type":"FeatureCollection","features":[]};
-        if (typeof INONDATION2017 === 'undefined') INONDATION2017 = {"type":"FeatureCollection","features":[]};
-    } catch(e){}
-
-    var layer1999 = L.geoJSON(INONDATION1999, { style: style, onEachFeature: onEachFeature, filter: filterData });
-    var layer2008 = L.geoJSON(INONDATION2008, { style: style, onEachFeature: onEachFeature, filter: filterData });
-    var layer2017 = L.geoJSON(INONDATION2017, { style: style, onEachFeature: onEachFeature, filter: filterData });
-
-    // Activation par défaut de 2017
-    layer2017.addTo(map);
-    map.fitBounds(layer2017.getBounds());
-
-    // --- MENU COUCHES ---
-    var baseMaps = {
-        "ESRI Satellite": basemapSat,
-        "Plan Gris (CartoDB)": basemapGris
-    };
-    
-    var overlayMaps = {
-        "Année 1999": layer1999,
-        "Année 2008": layer2008,
-        "Année 2017": layer2017
-    };
-    
-    if (layerEau) overlayMaps["Cours d'eau"] = layerEau;
-
-    L.control.layers(baseMaps, overlayMaps, { collapsed: false, autoZIndex: false }).addTo(map);
-
-
-    // --- LOGIQUE D'EXCLUSIVITÉ ---
-    map.on('overlayadd', function(e) {
-        var years = [layer1999, layer2008, layer2017];
-        var addedLayer = e.layer;
-        if (years.indexOf(addedLayer) !== -1) {
-            years.forEach(function(yearLayer) {
-                if (yearLayer !== addedLayer && map.hasLayer(yearLayer)) {
-                    setTimeout(function() {
-                        map.removeLayer(yearLayer);
-                    }, 0);
-                }
-            });
-        }
-    });
-
-
-    // --- LEGENDE ---
-    var legend = L.control({position: 'bottomleft'});
-    legend.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'info legend'),
-            grades = [0, 0.02, 0.05, 0.10, 0.15, 0.25, 0.50];
-
-        div.innerHTML = '<h4>Part Pop. Exposée</h4>';
-        
-        for (var i = 0; i < grades.length; i++) {
-            var label = (grades[i] * 100) + '%';
-            var nextLabel = grades[i + 1] ? '&ndash;' + (grades[i + 1] * 100) + '%' : '+';
-            div.innerHTML +=
-                '<i style="background:' + getColor(grades[i] + 0.0001) + '; border:1px solid #ccc"></i> ' +
-                label + (grades[i + 1] ? nextLabel : '+') + '<br>';
-        }
-        div.innerHTML += '<br><i style="background:#4FC3F7; height:2px; margin-top:8px;"></i> Cours d\'eau';
-        return div;
-    };
-    legend.addTo(map);
-
-
-    // ####################################################################
-    // PARTIE JAVASCRIPT 2 : LA FRISE CHRONOLOGIQUE
-    // ####################################################################
-
-    // 1. DÉFINITION DES DONNÉES
-    const eventsData = [
-        { 
-            year: 1910, title: "Crue centennale de la Seine", 
-            headline: "Paris sous les eaux : la référence historique.",
-            description: "Cette crue est la plus importante connue au XXe siècle. Bien que relativement lente, elle a paralysé Paris pendant plusieurs semaines, inondant les caves, les réseaux de transport (métro) et les infrastructures vitales. Elle sert encore de scénario de référence pour les plans de prévention actuels.", 
-            impact: "Aucun mort direct, mais des dizaines de milliers de personnes évacuées et des dégâts économiques considérables (estimés à 1,5 milliard d'euros actualisés).",
-            zone: "Bassin de la Seine, principalement Paris et sa banlieue.",
-            imageUrl: "https://upload.wikimedia.org/wikipedia/commons/7/7a/Paris_1910_Inondation_gare_Saint-Lazare.jpg?uselang=fr"
-        },
-        { 
-            year: 1930, title: "Crue du Tarn et de l'Aveyron", 
-            headline: "L'une des plus meurtrières de l'histoire moderne.",
-            description: "Des pluies diluviennes ont provoqué une montée record des eaux du Tarn et de ses affluents. Montauban et Moissac ont été submergées par des flots d'une violence extrême, causant l'effondrement de nombreux bâtiments et ponts.", 
-            impact: "Environ 200 morts (le bilan le plus lourd du XXe siècle).",
-            zone: "Tarn, Aveyron, Garonne (Sud-Ouest de la France).",
-            imageUrl: "https://upload.wikimedia.org/wikipedia/commons/d/d7/21_1930_03_inondat_Couthures_maison.jpg?uselang=fr"
-        },
-        { 
-            year: 1988, title: "Inondations de Nîmes", 
-            headline: "Pluies torrentielles et phénomène cévenol.",
-            description: "Cet événement fut caractérisé par des pluies d'une intensité exceptionnelle et très localisées (phénomène cévenol). En quelques heures, la ville de Nîmes a été frappée par des ruissellements violents, transformant les rues en torrents.", 
-            impact: "9 morts. Des milliers de véhicules emportés et d'importants dégâts matériels.",
-            zone: "Nîmes et Gard (Occitanie).",
-            imageUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Inondation_Nimes_Total.jpg"
-        },
-        { 
-            year: 1999, title: "Crues de l'Aude, du Tarn et de l'Aveyron", 
-            headline: "Vague de crues rapides dans le Languedoc-Roussillon.",
-            description: "Ces crues, survenues à la fin de l'automne, ont touché plusieurs départements du sud de la France. L'Aude, le Tarn et l'Hérault ont vu leurs niveaux monter brutalement, causant de graves inondations dans des zones habitées.", 
-            impact: "35 morts.",
-            zone: "Aude, Hérault, Tarn et Aveyron.",
-            imageUrl: "https://images.ladepeche.fr/api/v1/images/view/5c37be9e3e45465c01085164/large/image.jpg"
-        },
-        { 
-            year: 2002, title: "Crue cévenole du Gard", 
-            headline: "Record de précipitations en 24 heures.",
-            description: "Cet épisode a établi un record national de précipitations sur 24 heures (jusqu'à 700 mm localement). Les eaux ont dévasté de petites vallées et campings, le Vigan et Alès ayant été particulièrement touchés.", 
-            impact: "24 morts et 7 disparus. Des milliers de sinistrés et destructions de ponts.",
-            zone: "Gard, Ardèche, Hérault",
-            imageUrl: "https://france3-regions.franceinfo.fr/image/2nz4xNvTwbm-uAjBsMgmbb7u7No/2101x1396/regions/2020/06/09/5edf3fce6f043_ales_1_maxppp-3249875.jpg"
-        },
-        { 
-            year: 2010, title: "Tempête Xynthia", 
-            headline: "Submersion marine historique sur la façade atlantique.",
-            description: "Xynthia est une tempête hivernale qui a frappé l'Europe de l'Ouest. En France, elle est surtout mémorable pour la vague de submersion marine qui, combinée à une marée haute, a inondé des zones côtières peu protégées, notamment en Vendée et Charente-Maritime.", 
-            impact: "47 morts, principalement par noyade dans des habitations situées sous le niveau de la mer.",
-            zone: "Côte Atlantique (Vendée, Charente-Maritime).",
-            imageUrl: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Thalassoiledere.jpg"
-        },
-        { 
-            year: 2016, title: "Crues de la Seine et du Loing", 
-            headline: "Inondations du bassin parisien, la plus forte depuis 1982.",
-            description: "Conséquence de précipitations exceptionnellement longues sur le bassin versant, ces crues ont provoqué une montée lente mais prolongée de la Seine. Si les dégâts humains ont été faibles, l'impact sur les transports, les musées (Louvre, Orsay) et les infrastructures fut majeur.", 
-            impact: "4 morts. Dégâts estimés à 1 milliard d'euros. Fermeture temporaire de musées et d'axes de transport.",
-            zone: "Île-de-France et Centre-Val de Loire (Bassin de la Seine).",
-            imageUrl: "https://episeine.fr/sites/default/files/thumbnails/image/2016_souppes_sur_loing.jpg"
-        },
-        { 
-            year: 2020, title: "Tempête Alex", 
-            headline: "Inondations et destruction dans les Alpes-Maritimes.",
-            description: "Cette tempête a provoqué des cumuls de pluie records dans l'arrière-pays niçois, entraînant des crues éclairs des fleuves côtiers comme la Vésubie et la Roya. Des villages entiers ont été dévastés par les glissements de terrain et les flots.", 
-            impact: "10 morts et des disparus. Destruction quasi-totale de plusieurs villages et de routes.",
-            zone: "Alpes-Maritimes (Vallées de la Vésubie et de la Roya).",
-            imageUrl: "https://media.ouest-france.fr/v1/pictures/MjAyMDEwMThlODk1MDE0M2I0YjQ2NzQxODAwNWViZDBkNzQ4NDE?width=630&height=354&focuspoint=50%2C25&cropresize=1&client_id=bpeditorial&sign=3fb1752c31f51240aebf9aad4bbbab8b4436e8d5a93ad7de4d5d4067349e8204"
-        }
-    ];
-
-    // Configuration de la timeline pour un affichage à INTERVALLES ÉGAUX
-    const numEvents = eventsData.length;
-    const totalIntervals = numEvents - 1; 
-    
-    const eventsListContainer = document.getElementById('events-list');
-    const detailsImageContainer = document.querySelector('.details-image');
-
-    // 2. LOGIQUE DE POSITIONNEMENT (en Pourcentage)
-    function calculatePosition(index) {
-        if (numEvents === 1) return 50; 
-        return (index / totalIntervals) * 100;
-    }
-
-    // 3. RENDU INITIAL DES ÉVÉNEMENTS
-    function getTimelineHTML(event, index) {
-        const positionX = calculatePosition(index); 
-        const positionClass = index % 2 !== 0 ? 'below' : 'above'; 
-
-        return `
-            <div class="event" 
-                data-index="${index}" 
-                data-position="${positionClass}" 
-                style="left: ${positionX}%;"
-                onclick="updateEventFocus(${index})" >
-                <div class="event-dot"></div>
-                <div class="event-date">${event.year}</div>
+    <div class="details-box">
+        <div class="details-text">
+            <h3 id="detail-title">Titre de l'événement</h3>
+            <p><strong>Année :</strong> <span id="detail-year">YYYY</span></p>
+            <p style="font-size: 1.1rem; color: #1e293b;"><strong id="detail-headline">Accroche</strong></p>
+            <p id="detail-description">Description détaillée...</p>
+            <div style="background: #fef2f2; padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #ef4444;">
+                <p style="margin:0; color: #991b1b;"><strong>Impact humain :</strong> <span id="detail-impact"></span></p>
+                <p style="margin:5px 0 0 0; color: #991b1b;"><strong>Zone :</strong> <span id="detail-zone"></span></p>
             </div>
-        `;
-    }
+        </div>
+        <div class="details-image"></div>
+    </div>
 
-    eventsData.forEach((event, index) => {
-        eventsListContainer.innerHTML += getTimelineHTML(event, index);
-    });
-    
-    const allEvents = document.querySelectorAll('.event'); 
+    <script type="text/javascript" src="inondation_1999_wgs84.json"></script>
+    <script type="text/javascript" src="inondation_2008_wgs84.json"></script>
+    <script type="text/javascript" src="inondation_2017_wgs84.json"></script>
+    <script type="text/javascript" src="cours_eau.json"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-    // 4. LOGIQUE DE FOCUS PAR CLIC
-    function updateEventFocus(index) {
-        const currentEvent = eventsData[index];
+    <script>
+        // ####################################################################
+        // PARTIE 1 : LA CARTE
+        // ####################################################################
 
-        // A. Mise à jour de la Chronologie
-        allEvents.forEach(eventElement => {
-            eventElement.classList.remove('active');
+        // 1. FONDS DE CARTE
+        var basemapSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: 'Tiles &copy; Esri' });
+        var basemapGris = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' });
+
+        var map = L.map('map', { center: [46.6, 2.5], zoom: 6, layers: [basemapGris], zoomControl: false });
+        L.control.zoom({ position: 'topright' }).addTo(map);
+        L.control.scale({ position: 'bottomleft', metric: true, imperial: false }).addTo(map);
+
+        // 2. BOUTON INFO
+        var InfoControl = L.Control.extend({
+            options: { position: 'topleft' },
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom-info');
+                container.innerHTML = '?'; 
+                container.onclick = function(){ document.getElementById("infoModal").style.display = "block"; }
+                return container;
+            }
         });
+        map.addControl(new InfoControl());
 
-        const activeEventElement = document.querySelector(`.event[data-index="${index}"]`);
-        if (activeEventElement) {
-            activeEventElement.classList.add('active');
+        function closeModal() { document.getElementById("infoModal").style.display = "none"; }
+        window.onclick = function(event) { if (event.target == document.getElementById("infoModal")) closeModal(); }
+
+        // 3. STYLE
+        function getColor(d) {
+            return d > 0.5 ? '#800026' : d > 0.25 ? '#BD0026' : d > 0.15 ? '#E31A1C' : d > 0.1 ? '#FC4E2A' : d > 0.05 ? '#FD8D3C' : d > 0.02 ? '#FEB24C' : '#FFEDA0';
+        }
+        function formatPct(val) { return (val != null) ? (val * 100).toFixed(1) + '%' : 'N/A'; }
+        function style(feature) {
+            return { fillColor: getColor(feature.properties.PCT_EXPO), weight: 0.5, opacity: 1, color: 'black', fillOpacity: 0.7 };
         }
 
-        // B. Mise à jour de la Zone de Détails
-        document.getElementById('detail-title').textContent = `${currentEvent.title}`;
-        document.getElementById('detail-year').textContent = `${currentEvent.year}`;
-        document.getElementById('detail-headline').textContent = `${currentEvent.headline}`;
-        document.getElementById('detail-description').textContent = currentEvent.description;
-        document.getElementById('detail-impact').textContent = currentEvent.impact;
-        document.getElementById('detail-zone').textContent = currentEvent.zone;
+        // Cours d'eau
+        try { if (typeof EAU !== 'undefined') L.geoJSON(EAU, { style: { color: "#4FC3F7", weight: 1 } }).addTo(map); } catch(e){}
+
+        // 4. INFO PANEL
+        var info = L.control();
+        info.onAdd = function (map) { this._div = L.DomUtil.create('div', 'info'); this.update(); return this._div; };
+        info.update = function (props) {
+            this._div.innerHTML = props ? 
+                '<h4>' + props.libuu2020 + ' (' + props.annee + ')</h4><b>Exposition : ' + formatPct(props.PCT_EXPO) + '</b><br>Pop ZI: ' + Math.round(props.POP_ZI).toLocaleString() 
+                : '<h4>Survolez une zone</h4>';
+        };
+        info.addTo(map);
+
+        // 5. CHARGEMENT DONNEES
+        function highlightFeature(e) {
+            var layer = e.target; layer.setStyle({ weight: 2, color: '#333', fillOpacity: 0.9 }); layer.bringToFront(); info.update(layer.feature.properties);
+        }
+        function resetHighlight(e) { e.target.setStyle(style(e.target.feature)); info.update(); }
+        function onEachFeature(feature, layer) { layer.on({ mouseover: highlightFeature, mouseout: resetHighlight }); }
+        function filterData(feature) { return feature.properties.PCT_EXPO !== null; }
+
+        try {
+            if (typeof INONDATION1999 === 'undefined') INONDATION1999 = {"type":"FeatureCollection","features":[]};
+            if (typeof INONDATION2008 === 'undefined') INONDATION2008 = {"type":"FeatureCollection","features":[]};
+            if (typeof INONDATION2017 === 'undefined') INONDATION2017 = {"type":"FeatureCollection","features":[]};
+        } catch(e){}
+
+        var l99 = L.geoJSON(INONDATION1999, { style: style, onEachFeature: onEachFeature, filter: filterData });
+        var l08 = L.geoJSON(INONDATION2008, { style: style, onEachFeature: onEachFeature, filter: filterData });
+        var l17 = L.geoJSON(INONDATION2017, { style: style, onEachFeature: onEachFeature, filter: filterData }).addTo(map);
         
-        // C. Affichage de l'image
-        detailsImageContainer.innerHTML = `<img src="${currentEvent.imageUrl}" alt="Photo de ${currentEvent.title}">`;
-    }
-    
-    // Initialisation de l'affichage
-    updateEventFocus(0);
+        map.fitBounds(l17.getBounds());
 
-</script>
+        L.control.layers(
+            { "Satellite": basemapSat, "Plan": basemapGris },
+            { "1999": l99, "2008": l08, "2017": l17 },
+            { collapsed: false }
+        ).addTo(map);
 
+        // Légende
+        var legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'info legend'), grades = [0, 0.02, 0.05, 0.1, 0.15, 0.25, 0.5];
+            div.innerHTML = '<strong>Pop. Exposée</strong><br>';
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML += '<i style="background:' + getColor(grades[i] + 0.001) + '"></i> ' + (grades[i]*100) + (grades[i+1] ? '&ndash;' + (grades[i+1]*100) + '%' : '+') + '<br>';
+            }
+            return div;
+        };
+        legend.addTo(map);
+
+
+        // ####################################################################
+        // PARTIE 2 : LA FRISE CHRONOLOGIQUE
+        // ####################################################################
+
+        const eventsData = [
+            { year: 1910, title: "Crue centennale de la Seine", headline: "Paris sous les eaux : la référence historique.", description: "La plus importante crue du XXe siècle à Paris.", impact: "Dégâts matériels immenses.", zone: "Bassin parisien", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/7/7a/Paris_1910_Inondation_gare_Saint-Lazare.jpg?uselang=fr" },
+            { year: 1930, title: "Crue du Tarn", headline: "Une des plus meurtrières.", description: "Inondations dévastatrices dans le sud-ouest.", impact: "200 morts.", zone: "Tarn, Garonne", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/d/d7/21_1930_03_inondat_Couthures_maison.jpg?uselang=fr" },
+            { year: 1988, title: "Inondations de Nîmes", headline: "Catastrophe éclair.", description: "Orages cévenols d'une violence rare.", impact: "9 morts.", zone: "Nîmes", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Inondation_Nimes_Total.jpg" },
+            { year: 1999, title: "Crues de l'Aude", headline: "Dévastation dans le sud.", description: "Crues rapides automnales.", impact: "35 morts.", zone: "Aude", imageUrl: "https://images.ladepeche.fr/api/v1/images/view/5c37be9e3e45465c01085164/large/image.jpg" },
+            { year: 2002, title: "Crue du Gard", headline: "Record de pluie.", description: "Pluies exceptionnelles sur le Gard.", impact: "24 morts.", zone: "Gard", imageUrl: "https://france3-regions.franceinfo.fr/image/2nz4xNvTwbm-uAjBsMgmbb7u7No/2101x1396/regions/2020/06/09/5edf3fce6f043_ales_1_maxppp-3249875.jpg" },
+            { year: 2010, title: "Xynthia", headline: "Submersion marine.", description: "Tempête et marée haute conjuguées.", impact: "47 morts.", zone: "Vendée", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/5/5f/Thalassoiledere.jpg" },
+            { year: 2020, title: "Tempête Alex", headline: "Désastre dans les vallées.", description: "Crue éclair de la Vésubie.", impact: "10 morts, villages détruits.", zone: "Alpes-Maritimes", imageUrl: "https://media.ouest-france.fr/v1/pictures/MjAyMDEwMThlODk1MDE0M2I0YjQ2NzQxODAwNWViZDBkNzQ4NDE?width=630&height=354" }
+        ];
+
+        const eventsListContainer = document.getElementById('events-list');
+        const detailsImageContainer = document.querySelector('.details-image');
+
+        function getTimelineHTML(event, index) {
+            const positionX = (index / (eventsData.length - 1)) * 100; 
+            const positionClass = index % 2 !== 0 ? 'below' : 'above'; 
+            return `<div class="event" data-index="${index}" data-position="${positionClass}" style="left: ${positionX}%;" onclick="updateEventFocus(${index})">
+                        <div class="event-dot"></div>
+                        <div class="event-date">${event.year}</div>
+                    </div>`;
+        }
+
+        eventsData.forEach((event, index) => { eventsListContainer.innerHTML += getTimelineHTML(event, index); });
+
+        function updateEventFocus(index) {
+            const evt = eventsData[index];
+            document.querySelectorAll('.event').forEach(el => el.classList.remove('active'));
+            document.querySelector(`.event[data-index="${index}"]`).classList.add('active');
+
+            document.getElementById('detail-title').textContent = evt.title;
+            document.getElementById('detail-year').textContent = evt.year;
+            document.getElementById('detail-headline').textContent = evt.headline;
+            document.getElementById('detail-description').textContent = evt.description;
+            document.getElementById('detail-impact').textContent = evt.impact;
+            document.getElementById('detail-zone').textContent = evt.zone;
+            detailsImageContainer.innerHTML = `<img src="${evt.imageUrl}" alt="${evt.title}">`;
+        }
+        
+        updateEventFocus(0);
+    </script>
 </body>
 </html>
