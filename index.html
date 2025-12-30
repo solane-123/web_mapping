@@ -40,6 +40,19 @@
             --color-line-ra: #C8BDC4;
             --color-bg-ra: #f5f8fb;
             --color-dot-inactive-ra: #aaa;
+
+    /* Couleurs Frise Industriel (ind) - GRIS FONCÉ / BLEU NUIT */
+            --color-primary-ind: #2c3e50; 
+            --color-active-ind: #414345;
+            --color-line-ind: #95a5a6;
+            --color-bg-ind: #f5f8fb;
+            --color-dot-inactive-ind: #aaa;
+    /* Couleurs Frise Séismes (sei) - ROUGE/TERRE CUITE */
+            --color-primary-sei: #895C76; 
+            --color-active-sei: #CB7166;
+            --color-line-sei: #B3A1A1;
+            --color-bg-sei: #f5f8fb;
+            --color-dot-inactive-sei: #aaa;
         }
         
         * { box-sizing: border-box; }
@@ -342,13 +355,12 @@
     // --- 1. CONFIGURATION ---
     const detailsContent = {
         'inondation': { title: "Inondations", color: "#3A6EA5", icon: "fa-water" },
-        'industriel': { title: "Risques Technologiques", color: "#414345", icon: "fa-industry" },
-        'seisme': { title: "Séismes", color: "#D97706", icon: "fa-house-crack", desc: "Sismicité modérée en France." },
-        
-        // LES 3 FRISES (Mouvement, Nucléaire, Radon)
+        // LES 5 FRISES (Mouvement, Nucléaire, Radon, Industriel, Séisme)
         'mouvement': { title: "Mouvements de Terrain", color: "#8C6A43", icon: "fa-hill-rockslide" }, 
         'nucleaire': { title: "Nucléaire", color: "#595530", icon: "fa-radiation" },
-        'radon': { title: "Radon", color: "#917280", icon: "fa-wind" } // Couleur Violette
+        'radon': { title: "Radon", color: "#917280", icon: "fa-wind" },
+        'industriel': { title: "Risques Industriels", color: "#2c3e50", icon: "fa-industry" },
+        'seisme': { title: "Séismes", color: "#CB7166", icon: "fa-house-crack" } // Rouge Terre
     };
 
     // --- 2. NAVIGATION ---
@@ -393,8 +405,8 @@
         if (key === 'inondation') {
             html += `<iframe src="https://clem6703.github.io/Inondation/" style="width:100%; height:500px; border:none;"></iframe>`;
         } 
-        // CAS FRISES : MOUVEMENT, NUCLEAIRE ET RADON (Ajouté ici)
-        else if (key === 'mouvement' || key === 'nucleaire' || key === 'radon') {
+        // CAS FRISES (TOUTES LES FRISES)
+        else if (['mouvement', 'nucleaire', 'radon', 'industriel', 'seisme'].includes(key)) {
             html += `
                 <div class="timeline-container">
                     <div class="timeline">
@@ -410,10 +422,11 @@
                         <p><strong>Année :</strong> <span id="d-year">-</span></p>
                         <p><strong id="d-headline"></strong></p>
                         <p id="d-desc"></p>
-                        <div id="d-radon-extras" style="display:none; margin-top:10px; padding:10px; background:#f4f4f4; border-radius:8px;">
-                            <p><strong>Clé :</strong> <span id="d-keydetail"></span></p>
-                            <p><strong>Réf :</strong> <span id="d-ref"></span></p>
+                        
+                        <div id="d-extras" style="display:none; margin-top:10px; padding:10px; background:#f4f4f4; border-radius:8px;">
+                            <p><strong><span id="d-extra-label">Détail</span> :</strong> <span id="d-keydetail"></span></p>
                         </div>
+                        
                         <p id="d-impact-line"><em>Impact : <span id="d-impact"></span></em></p>
                     </div>
                     <div class="details-image" id="d-img-container"></div>
@@ -432,47 +445,75 @@
         setTimeout(() => modal.classList.add('visible'), 10);
 
         // Lancement Frise
-        if (key === 'mouvement' || key === 'nucleaire' || key === 'radon') {
+        if (['mouvement', 'nucleaire', 'radon', 'industriel', 'seisme'].includes(key)) {
             setTimeout(() => { initTimeline(key, d.color); }, 50);
         }
     }
 
     // --- 4. LOGIQUE FRISE ---
+    // --- LOGIQUE FRISE (MOUVEMENT, NUCLEAIRE, RADON, INDUSTRIEL, SEISME) ---
+// --- LOGIQUE FRISE (MOUVEMENT, NUCLEAIRE, RADON, INDUSTRIEL, SEISME) ---
+// --- LOGIQUE FRISE (MOUVEMENT, NUCLEAIRE, RADON, INDUSTRIEL, SEISME) ---
     function initTimeline(type, color) {
         
-        // Données Mouvements
+        // 1. Données Mouvements (Marron)
         const dataMouv = [
             { year: 1953, t: "L’Harmalière", h: "Effondrement majeur en Isère.", d: "Le versant du Mont Saint-Eynard a connu un effondrement de plusieurs dizaines de milliers de m³.", i: "3 morts.", img: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Eboulement_de_La_Rivi%C3%A8re_en_mars_2025.jpg" },
-            { year: 1970, t: "La Clapière", h: "Glissement actif.", d: "Masse rocheuse instable de 50 millions de m³ déplacée à vitesse record.", i: "Menace la vallée.", img: "https://www.encyclopedie-environnement.org/app/uploads/2019/06/clapiere_fig6-2016.jpg" },
+            { year: 1970, t: "La Clapière", h: "Glissement actif.", d: "Masse rocheuse instable de 50 millions de m³ déplacée à vitesse record.", i: "Menace la vallée.", img: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Glissement_de_terrain_de_la_Clapi%C3%A8re.jpg" },
             { year: 1987, t: "Séchilienne", h: "Instabilité du Mont Sec.", d: "Risque d'éboulement majeur pouvant créer un barrage naturel.", i: "Surveillance 24/7.", img: "https://upload.wikimedia.org/wikipedia/commons/6/64/Ruines_de_S%C3%A9chilienne_le_14-07-06.jpg" },
-            { year: 1992, t: "Mont Granier", h: "Réactivation historique.", d: "Chutes de roches massives sur ce site connu pour la catastrophe de 1248.", i: "Routes menacées.", img: "https://cdn-s-www.ledauphine.com/images/8D3FB866-6A0C-44BC-9390-357A240B07E7/MF_contenu/50-000-m3-de-roches-sont-tombes-au-mont-granier-hier-matin-1462609866.jpg" },
-            { year: 2020, t: "Tempête Alex", h: "Crues et glissements.", d: "Pluies extrêmes provoquant des coulées de boue dévastatrices.", i: "Destruction majeure.", img: "https://www.irma-grenoble.com/photos/st-martin-vesubie/361w001EP_Alpes-Maritimes-inondation_02-10-2020/361w260EP.jpg" }
+            { year: 1992, t: "Mont Granier", h: "Réactivation historique.", d: "Chutes de roches massives sur ce site connu pour la catastrophe de 1248.", i: "Routes menacées.", img: "https://upload.wikimedia.org/wikipedia/commons/3/30/Mont_Granier_depuis_Chapareillan.JPG" },
+            { year: 2020, t: "Tempête Alex", h: "Crues et glissements.", d: "Pluies extrêmes provoquant des coulées de boue dévastatrices.", i: "Destruction majeure.", img: "https://upload.wikimedia.org/wikipedia/commons/9/96/V%C3%A9subie_apr%C3%A8s_la_temp%C3%AAte_Alex_-_Roquebilli%C3%A8re_-_2020-10-06.jpg" }
         ];
 
-        // Données Nucléaire
+        // 2. Données Nucléaire (Vert)
         const dataNuc = [
-            { year: 1969, t: "St-Laurent A1", h: "Fusion partielle (INES 4).", d: "Erreur de chargement entraînant la fusion de 50kg d'uranium.", i: "Contamination interne.", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/A1_A2_saint_laurent_FK.jpg/500px-A1_A2_saint_laurent_FK.jpg" },
-            { year: 1980, t: "St-Laurent A2", h: "Accident INES 4.", d: "Fusion de combustible due à la corrosion.", i: "Arrêt définitif filière.", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/HD.15.076_%2811840243393%29.jpg/500px-HD.15.076_%2811840243393%29.jpg" },
-            { year: 1999, t: "Le Blayais", h: "Inondation centrale.", d: "Tempête Martin : submersion partielle et perte de systèmes de sûreté.", i: "Arrêt d'urgence.", img: "https://media.sudouest.fr/9775433/1200x-1/so-57ecd02466a4bdbe429d2579-ph0.jpg" },
-            { year: 2008, t: "Tricastin", h: "Fuite uranium.", d: "Déversement accidentel de 74kg d'uranium dans les rivières.", i: "Interdiction consommation eau.", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Site_nucl%C3%A9aire_Tricastin.jpg/500px-Site_nucl%C3%A9aire_Tricastin.jpg" },
-            { year: 2011, t: "Fukushima (Impact)", h: "Stress tests.", d: "Suite à la catastrophe japonaise, audit complet du parc français.", i: "Renforcement normes (ASN).", img: "https://www.connaissancedesenergies.org/sites/connaissancedesenergies.org/files/styles/image_370px_large/public/image_article/Fukushima-Daiichi-FP.jpg" }
+            { year: 1969, t: "St-Laurent A1", h: "Fusion partielle (INES 4).", d: "Erreur de chargement entraînant la fusion de 50kg d'uranium.", i: "Contamination interne.", img: "https://upload.wikimedia.org/wikipedia/commons/3/39/A1_A2_saint_laurent_FK.jpg" },
+            { year: 1980, t: "St-Laurent A2", h: "Accident INES 4.", d: "Fusion de combustible due à la corrosion.", i: "Arrêt définitif filière.", img: "https://upload.wikimedia.org/wikipedia/commons/f/f9/HD.15.076_%2811840243393%29.jpg" },
+            { year: 1999, t: "Le Blayais", h: "Inondation centrale.", d: "Tempête Martin : submersion partielle et perte de systèmes de sûreté.", i: "Arrêt d'urgence.", img: "https://upload.wikimedia.org/wikipedia/commons/d/d6/Centrale_nucl%C3%A9aire_du_Blayais_2012.jpg" },
+            { year: 2008, t: "Tricastin", h: "Fuite uranium.", d: "Déversement accidentel de 74kg d'uranium dans les rivières.", i: "Interdiction consommation eau.", img: "https://upload.wikimedia.org/wikipedia/commons/6/65/Site_nucl%C3%A9aire_Tricastin.jpg" },
+            { year: 2011, t: "Fukushima (Impact)", h: "Stress tests.", d: "Suite à la catastrophe japonaise, audit complet du parc français.", i: "Renforcement normes (ASN).", img: "https://upload.wikimedia.org/wikipedia/commons/0/04/Fukushima_I_nuclear_accidents_radioactive_cloud_dispersion_2011-03-16_1639_UTC.jpg" }
         ];
 
-        // Données Radon (NOUVEAU)
+        // 3. Données Radon (Violet)
         const dataRadon = [
-            { year: 1999, t: "Premier Zonage", h: "Création des zones prioritaires.", d: "Début de la prise en compte réglementaire du risque radon.", i: "Identification des classes 1, 2 et 3.", keyDetail: "Zonage initial", ref: "Circulaire 13/12/1999" },
-            { year: 2002, t: "Écoles", h: "Recommandations scolaires.", d: "Première obligation de surveillance dans les lieux recevant des enfants.", i: "Mesure obligatoire.", keyDetail: "Protection enfance", ref: "Circulaire 2002/105" },
-            { year: 2010, t: "Bâtiments Publics", h: "Extension surveillance.", d: "Obligation étendue à certains bâtiments publics et souterrains.", i: "Surveillance accrue.", keyDetail: "ERP et souterrains", ref: "Décret 2010-222" },
-            { year: 2015, t: "Directive UE", h: "Réglementation Européenne.", d: "Transposition de la directive Euratom. Seuil fixé à 300 Bq/m³.", i: "Harmonisation européenne.", keyDetail: "Seuil 300 Bq/m³", ref: "Euratom 2013/59" },
-            { year: 2018, t: "Nouveau Zonage", h: "Zonage à la commune.", d: "Le zonage devient plus précis (5 catégories).", i: "Mesure obligatoire étendue.", keyDetail: "Zonage précis", ref: "Décret 2018-437" },
-            { year: 2022, t: "Constructions", h: "Normes construction.", d: "Nouvelles recommandations pour l'étanchéité des bâtiments neufs.", i: "Prévention dès la construction.", keyDetail: "Normes BTP", ref: "Arrêté ministériel" }
+            { year: 1999, t: "Premier Zonage", h: "Création des zones prioritaires.", d: "Début de la prise en compte réglementaire du risque radon.", i: "Identification des classes 1, 2 et 3.", keyDetail: "Zonage initial" },
+            { year: 2002, t: "Écoles", h: "Recommandations scolaires.", d: "Première obligation de surveillance dans les lieux recevant des enfants.", i: "Mesure obligatoire.", keyDetail: "Protection enfance" },
+            { year: 2010, t: "Bâtiments Publics", h: "Extension surveillance.", d: "Obligation étendue à certains bâtiments publics et souterrains.", i: "Surveillance accrue.", keyDetail: "ERP et souterrains" },
+            { year: 2015, t: "Directive UE", h: "Réglementation Européenne.", d: "Transposition de la directive Euratom. Seuil fixé à 300 Bq/m³.", i: "Harmonisation européenne.", keyDetail: "Seuil 300 Bq/m³" },
+            { year: 2018, t: "Nouveau Zonage", h: "Zonage à la commune.", d: "Le zonage devient plus précis (5 catégories).", i: "Mesure obligatoire étendue.", keyDetail: "Zonage précis" },
+            { year: 2022, t: "Constructions", h: "Normes construction.", d: "Nouvelles recommandations pour l'étanchéité des bâtiments neufs.", i: "Prévention dès la construction.", keyDetail: "Normes BTP" }
         ];
 
-        // Sélection des données
+        // 4. Données Industriel (Gris - IMAGES CORRIGÉES)
+        const dataInd = [
+            { year: 1966, t: "Raffinerie Feyzin", h: "Catastrophe de Feyzin.", d: "Une fuite de gaz sur un bac de stockage de GPL a provoqué une série d'explosions spectaculaires (BLEVE - Boiling Liquid Expanding Vapor Explosion) et un incendie dévastateur. Cet événement est une référence historique pour la prévention des risques technologiques majeurs en France.", i: "18 morts (dont 11 pompiers), environ 80 blessés et dégâts considérables sur le site et les zones résidentielles voisines.", img: "https://cdn-s-www.leprogres.fr/images/9DC90647-48E9-4C0C-A897-17DCE35F50EF/NW_raw/la-raffinerie-apres-l-explosion-de-la-sphere-443-se-transforme-en-brasier-infernal-photo-d-archives-georges-vermard-1546551589.jpg" },
+            { year: 1976, t: "Explosion d’un dépôt pétrolier", h: "Événement ayant influencé la future directive Seveso.", d: "Bien qu'il s'agisse d'un incendie de dépôt pétrolier (cuves de stockage), cet événement, couplé à d'autres accidents de l'époque (notamment celui de Seveso en Italie), a mis en lumière la nécessité d'une réglementation stricte pour les sites à haut risque en France et en Europe. ", i: "Dégâts matériels majeurs. L'accent est mis sur la prévention des risques de grande ampleur.", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/Bundesarchiv_Bild_183-N0329-0306%2C_Rostock%2C_Tanker_%22B%C3%B6hlen%22.jpg" },
+            { year: 1986, t: "Incendie du site Sandoz", h: "Catastrophe environnementale transfrontalière sur le Rhin.", d: "Un incendie majeur s'est déclaré sur le site chimique Sandoz, libérant des tonnes de produits toxiques et agrochimiques dans le Rhin. La pollution a ravagé la faune aquatique sur des centaines de kilomètres et a servi de catalyseur pour renforcer la coopération européenne sur la gestion des risques transfrontaliers.", i: "Impact environnemental majeur (mortalité piscicole massive). A accéléré l'application de Seveso I et le besoin de gestion des conséquences environnementales.", img: "https://cdn-s-www.lalsace.fr/images/A3845209-4310-41FF-AB2D-5C233EE40B67/NW_raw/une-des-plus-grandes-catastrophes-chimiques-en-europe-le-1-er-novembre-1986-l-incendie-d-un-entrepot-de-produits-agrochimiques-de-l-usine-sandoz-a-schweizerhalle-avait-provoque-la-mort-des-poissons-du-rhin-archives-keystone-1477944813.jpg"},
+            { year: 1992, t: "Explosion Grande-Paroisse", h: "Événement marquant pour la sécurité des stockages chimiques.", d: "Une explosion a eu lieu dans un hangar de stockage d'une installation chimique. L'accident a rappelé la vulnérabilité des installations industrielles face aux risques d'explosion et a contribué à l'évolution des réglementations sur le stockage des substances dangereuses.", i: "Plusieurs victimes et blessés. A renforcé la nécessité de la maîtrise des risques dans les installations classées.",img: "https://www.laprovence.com/media/hermes/2022-11/2022-11-09/20221109_1_6_1_1_0_obj27084729_1.jpg"},
+            { year: 2001, t: "Explosion AZF à Toulouse", h: "Le plus grave accident industriel en France métropolitaine.", d: "Une explosion d'une violence exceptionnelle s'est produite dans le hangar de stockage de nitrate d'ammonium de l'usine chimique AZF. Le souffle a été ressenti à des kilomètres, causant des dégâts massifs dans toute la ville de Toulouse.", i: "31 morts et plus de 2 500 blessés. Dégâts matériels estimés à 3 milliards d'euros.", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/AZF_20010921_-15Fi11165-06.jpg" },
+            { year: 2013, t: "Explosion/Incendie Saipol", h: "Accident sur site Seveso (huiles végétales / biodiesel).", d: "L'accident s'est produit sur un site classé spécialisé dans la transformation d'huiles végétales. Il a causé une explosion et un incendie importants, soulignant le risque associé même aux matières premières biologiques.", i: "1 mort et plusieurs blessés. Impact local important et crise de confiance.", img: "https://france3-regions.franceinfo.fr/image/q3k7hONIaJS0igw8_MJBaDPOv2s/1200x900/regions/2024/02/28/explosion-et-incendie-chez-saipol-dieppe-explosion-et-incendie-chez-saipol-dieppe-00-00-10-23-65defe02d6f8d983086132.jpg" },
+            { year: 2019, t: "Incendie de l’usine Lubrizol à Rouen", h: "Pollution majeure et crise de communication des risques.", d: "Un incendie a ravagé l'usine classée Seveso seuil haut, spécialisée dans la production d'additifs pour lubrifiants. L'accident a généré un panache de fumée toxique et une pollution des sols et des eaux.", i: "Aucun décès direct. Crise sanitaire et environnementale majeure. A mené au renforcement des règles de stockage et de la transparence Seveso (Seveso III).", img: "https://upload.wikimedia.org/wikipedia/commons/7/7c/Daniel_BRIOT_Incendie_usine_Lubrizol_Rouen_2019-2020-2021_Paysages-009-20190926.jpg" },
+        ];
+
+        // 5. Données Séisme (Rouge)
+        const dataSei = [
+            { year: 1909, t: "Séisme de Lambesc", h: "Le plus fort séisme moderne en France métropolitaine.", d: "Séisme dévastateur dans la région de la Durance. Les dégâts ont été particulièrement importants dans les villages de Rognes, Saint-Cannat et Lambesc, avec de nombreux effondrements de maisons.", i: "46 morts (bilan officiel), plusieurs centaines de blessés.", Magnitude: "~6", img: "https://upload.wikimedia.org/wikipedia/commons/6/69/Vern%C3%A8gues_-_tremblement_de_terre_du_11_juin_1909_%281%29.jpg" },
+            { year: 1967, t: "Séisme d’Arette", h: "Destruction d'un village des Pyrénées-Atlantiques.", d: "Le séisme s'est produit à 6h43 du matin. Il a causé l'effondrement de plusieurs bâtiments dans le village d'Arette, nécessitant une reconstruction quasi-totale. Les secousses ont été ressenties jusqu'à Bordeaux et Toulouse.", i: "1 mort (par crise cardiaque), plusieurs blessés. Village détruit à 80 %.", Magnitude: "~5.3", img: "https://image.jimcdn.com/app/cms/image/transf/none/path/sad38b0da414a0498/image/if071a249d2638b34/version/1391488591/image.jpg"},
+            { year: 1980, t: "Séisme d’Arudy", h: "Dégâts importants dans la vallée d’Ossau (Pyrénées).", d: "Séisme majeur dans les Pyrénées. Il a provoqué des dégâts significatifs sur le bâti traditionnel dans la vallée d'Ossau, nécessitant l'intervention de l'armée et de lourds travaux de réhabilitation.", i: "70 blessés légers, dégâts matériels importants dans les villages comme Arudy et Bielle.", Magnitude: "5.1", img: "https://media.sudouest.fr/19802572/1200x600/sudouest-photo-1-3486425.jpg"},
+            { year: 2003, t: "Séisme de Rambervillers", h: "Fortement ressenti dans le Grand Est.", d: "Ce séisme, bien que modéré, a été l'un des plus puissants enregistrés dans le Nord-Est de la France, une zone de sismicité historiquement plus faible. Il a causé des dégâts non structurels (fissures, chutes de cheminées) sur un large périmètre.", i: "Dégâts matériels légers à modérés (fissures). Pas de victimes directes, mais forte frayeur de la population.", Magnitude: "5.4", img: "https://cdn-s-www.vosgesmatin.fr/images/8b0bdeea-64c6-4081-98a4-c13eab1f8476/NW_raw/le-haut-de-la-commune-de-deneuvre-a-ete-le-plus-eprouve-le-22-fevrier-2003-photo-d-archives-er-1573491412.jpg"},
+            { year: 2011, t: "Séisme de La Rochelle / Charente-Maritime", h: "Dégâts sur les bâtis anciens de la côte atlantique.", d: "Séisme ressenti sur une large partie de l'Ouest de la France. Il a principalement endommagé des constructions anciennes et fragiles en Charente-Maritime, notamment dans la région de La Rochelle.", i: "Dégâts matériels sur des centaines de maisons, mais faible bilan humain.", Magnitude: "4.9", img: "https://france3-regions.franceinfo.fr/image/JrXZQcYRKlT-OS7W5hg3e_sUuYE/1200x1200/regions/2023/06/16/648cc8e925886_maison-cram-chaban.jpg"},
+            { year: 2014, t: "Séisme de Barcelonnette", h: "Fissurations multiples et rappels sur le risque alpin.", d: "Ce séisme, peu profond, a causé des fissurations sur de nombreux bâtiments dans la vallée de l'Ubaye. Bien qu'il n'ait pas été destructeur, il a rappelé l'activité sismique de l'arc alpin.", i: "Fissurations sur environ 1500 bâtiments. Pas de victimes.", magnitude: "4.8", img: "https://images.ladepeche.fr/api/v1/images/view/5c2e78f13e454606256925c6/large/image.jpg" },
+            { year: 2019, t: "Séisme du Teil", h: "Séisme exceptionnel en zone de faible sismicité.", d: "Ce séisme, bien que de magnitude modérée, a été le plus puissant de France depuis 1967. Sa faible profondeur a amplifié les dégâts, causant l'évacuation d'environ 300 personnes dans la commune du Teil.", i: "4 blessés légers. Dégâts majeurs, plusieurs centaines de bâtiments endommagés.", Magnitude: "5.4",  img: "https://www.francebleu.fr/pikapi/images/d7f5af8a-cf84-4303-a49a-58283d30fc54/1200x680" },
+            { year: 2022, t: "Séisme de La Tour-d’Auvergne", h: "Dégâts inhabituels pour la région Auvergne.", d: "Séisme le plus important de ces dernières décennies dans le Massif Central. Bien que d'intensité modérée, il a causé des dégâts sur le bâti ancien et a été largement ressenti, soulignant le risque sismique latent dans la région.", i: "Dégâts légers sur le bâti (fissures, cheminées). Pas de victimes.", Magnitude: "4.8", img: "https://www.francebleu.fr/pikapi/images/ebd187e1-d947-4817-abc7-3fb4054bb4a3/1200x680?webp=false"}
+        ];
+
+        // SÉLECTION DES DONNÉES
         let data;
         if (type === 'mouvement') data = dataMouv;
         else if (type === 'nucleaire') data = dataNuc;
-        else data = dataRadon; // Radon
+        else if (type === 'radon') data = dataRadon;
+        else if (type === 'industriel') data = dataInd;
+        else data = dataSei; // Séisme
         
         const container = document.getElementById('events-list');
         const line = document.getElementById('line-' + type);
@@ -481,7 +522,7 @@
         if(line) line.style.backgroundColor = '#ddd';
         if(progressBar) progressBar.style.backgroundColor = color;
 
-        // Génération HTML
+        // GÉNÉRATION HTML
         container.innerHTML = data.map((ev, i) => {
             let leftPos = (i / (data.length - 1)) * 100;
             let posClass = (i % 2 === 0) ? 'above' : 'below';
@@ -498,7 +539,7 @@
         updateTimeline(0, type, color);
     }
 
-    // --- MISE À JOUR CLIC ---
+    // --- MISE À JOUR CLIC (Avec gestion d'image de secours) ---
     window.updateTimeline = function(index, type, color) {
         const data = window.timelineData;
         const ev = data[index];
@@ -523,19 +564,31 @@
         document.getElementById('d-desc').innerText = ev.d;
         document.getElementById('d-impact').innerText = ev.i;
 
-        // Gestion Spécifique Radon (Pas d'image, mais texte en plus)
+        // Gestion Spécifique (Radon / Séisme)
         const imgDiv = document.getElementById('d-img-container');
-        const extraDiv = document.getElementById('d-radon-extras');
+        const extraDiv = document.getElementById('d-extras');
+        const extraLabel = document.getElementById('d-extra-label');
+        const extraVal = document.getElementById('d-keydetail');
         
         if (type === 'radon') {
-            imgDiv.style.display = 'none'; // Cacher l'image
-            extraDiv.style.display = 'block'; // Montrer les infos radon
-            document.getElementById('d-keydetail').innerText = ev.keyDetail;
-            document.getElementById('d-ref').innerText = ev.ref;
-        } else {
-            imgDiv.style.display = 'block'; // Montrer l'image
-            extraDiv.style.display = 'none'; // Cacher infos radon
-            imgDiv.innerHTML = `<img src="${ev.img}" onerror="this.style.display='none'">`;
+            imgDiv.style.display = 'none'; 
+            extraDiv.style.display = 'block'; 
+            extraLabel.innerText = "Détail";
+            extraVal.innerText = ev.keyDetail;
+        } 
+        else if (type === 'seisme') {
+            imgDiv.style.display = 'block'; 
+            extraDiv.style.display = 'block'; 
+            extraLabel.innerText = "Magnitude";
+            extraVal.innerText = ev.keyDetail;
+            // Image de secours si lien cassé
+            imgDiv.innerHTML = `<img src="${ev.img}" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/600px-No_image_available.svg.png'">`;
+        }
+        else {
+            imgDiv.style.display = 'block'; 
+            extraDiv.style.display = 'none'; 
+            // Image de secours si lien cassé
+            imgDiv.innerHTML = `<img src="${ev.img}" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/600px-No_image_available.svg.png'">`;
         }
     };
 </script>
