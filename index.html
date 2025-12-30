@@ -124,17 +124,16 @@
         iframe { width: 100%; height: 100%; border: none; }
         #map, .sidebar-controls { display: none; }
 
-        /* --- 6. MODALE FLOTTANTE (CORRIGÉE) --- */
+        /* --- 6. MODALE FLOTTANTE --- */
         #view-detail { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
-            z-index: 9999; /* Très haut pour passer au dessus de tout */
-            display: none; /* Caché par défaut via CSS */
+            z-index: 9999; 
+            display: none; 
             justify-content: center; align-items: center;
             opacity: 0; transition: opacity 0.3s ease;
         }
         
-        /* Classe ajoutée par JS pour afficher */
         #view-detail.visible { display: flex; opacity: 1; }
 
         .modal-window {
@@ -145,7 +144,6 @@
             transform: scale(0.95); transition: transform 0.3s ease;
         }
         
-        /* Animation d'entrée */
         #view-detail.visible .modal-window { transform: scale(1); }
 
         .modal-header {
@@ -161,18 +159,23 @@
         }
         .close-btn:hover { background: #fee2e2; color: #ef4444; transform: rotate(90deg); }
 
-        .modal-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+        .modal-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding: 20px; }
 
-        .map-banner-container { width: 100%; height: 500px; background: #f0f0f0; border-bottom: 1px solid #eee; flex-shrink: 0; }
-        .content-below-map { padding: 40px; display: flex; flex-wrap: wrap; gap: 40px; }
-        .content-col { flex: 1; min-width: 350px; }
-        
-        .split-layout { display: flex; height: 100%; }
-        .left-map-area { flex: 6; border-right: 1px solid #ddd; position: relative; }
-        .right-info-area { flex: 4; overflow-y: auto; padding: 30px; background: #fff; }
+        /* Style pour la description du risque (Texte ajouté) */
+        .risk-description {
+            background: #f8fafc;
+            border-left: 5px solid #ccc;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #374151;
+        }
+        .risk-description strong { color: #111827; }
 
-        .timeline-item { margin-bottom: 20px; padding-left: 15px; border-left: 2px solid #ddd; }
-        /* --- CORRECTIF FRISE OBLIGATOIRE --- */
+        /* FRISE CHRONOLOGIQUE */
+        .timeline-container { width: 100%; margin-bottom: 20px; }
         .timeline {
             position: relative !important;
             height: 120px !important;
@@ -180,18 +183,17 @@
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
             display: block !important;
-    }
+        }
 
         .timeline-line {
             position: absolute !important;
             top: 50%; left: 0; right: 0;
             height: 4px;
-            background-color: #ddd; /* Couleur par défaut */
+            background-color: #ddd; 
             z-index: 1; 
             transform: translateY(-50%);
-    }
+        }
 
         .timeline-progress {
             position: absolute !important;
@@ -200,9 +202,8 @@
             z-index: 2; 
             transform: translateY(-50%);
             transition: width 0.3s ease-out;
-    }
+        }
 
-/* C'EST ICI QUE ÇA MERDAIT AVANT : On force la position absolue */
         .event-marker {
             position: absolute !important;
             top: 50% !important;
@@ -214,7 +215,7 @@
             display: flex !important;
             flex-direction: column;
             align-items: center;
-    }
+        }
 
         .event-dot {
             width: 14px; height: 14px;
@@ -223,33 +224,86 @@
             background-color: #999;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             margin-bottom: 5px;
-    }
+        }
 
         .event-date {
             font-size: 0.85rem;
             font-weight: 600;
             color: #666;
             position: absolute;
+        }
+
+        .event-marker[data-pos="above"] .event-date { bottom: 20px; }
+        .event-marker[data-pos="below"] .event-date { top: 20px; }
+        .event-marker.active .event-dot { transform: scale(1.3); border-color: #fff; }
+        .event-marker.active .event-date { font-weight: bold; color: #000; }
+
+        .details-box {
+            display: flex; gap: 30px; padding: 20px;
+            background: #fff; border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            border-top: 4px solid #ccc;
+        }
+        .details-image { flex: 1; height: 250px; background: #eee; border-radius: 8px; overflow: hidden; }
+        .details-image img { width: 100%; height: 100%; object-fit: cover; }
+        .details-text { flex: 2; }
+
+/* --- STYLE SECTIONS INFO (HAUT ET BAS) --- */
+    .info-container {
+        max-width: 1000px;
+        width: 95%;
+        background: var(--surface-white);
+        border-radius: var(--radius-lg);
+        padding: 40px 50px;
+        box-shadow: var(--shadow-lg);
+        border: 1px solid rgba(255,255,255,0.8);
+        margin-bottom: 40px; /* Espace sous le bloc du haut */
     }
 
-/* Decalage des dates pour éviter qu'elles se chevauchent */
-    .event-marker[data-pos="above"] .event-date { bottom: 20px; }
-    .event-marker[data-pos="below"] .event-date { top: 20px; }
-
-/* État actif */
-    .event-marker.active .event-dot { transform: scale(1.3); border-color: #fff; }
-    .event-marker.active .event-date { font-weight: bold; color: #000; }
-
-/* Styles spécifiques injectés par JS, mais on assure les bases ici */
-    .details-box {
-        display: flex; gap: 30px; padding: 20px;
-        background: #fff; border-radius: 12px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-        border-top: 4px solid #ccc;
+    /* Partie du bas spécifique */
+    .info-container.bottom-section {
+        margin-top: 40px;     /* Espace au-dessus du bloc du bas */
+        margin-bottom: 60px;
+        background: #f8fafc; /* Légèrement grisé pour différencier */
     }
-    .details-image { flex: 1; height: 250px; background: #eee; border-radius: 8px; overflow: hidden; }
-    .details-image img { width: 100%; height: 100%; object-fit: cover; }
-    .details-text { flex: 2; }
+
+    .info-header { text-align: center; margin-bottom: 30px; }
+    .info-tagline { color: var(--primary); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; margin-bottom: 10px; display: block;}
+    .info-title { font-family: 'Space Grotesk', sans-serif; font-size: 2rem; margin: 0; color: var(--text-main); }
+    .info-subtitle { font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; color: var(--text-main); margin-bottom: 15px; }
+
+    .info-text { color: #4b5563; line-height: 1.7; font-size: 1rem; margin-bottom: 15px; }
+    
+    /* Liste à puces (Haut) */
+    .check-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .check-list li { position: relative; padding-left: 30px; color: #374151; font-weight: 500; }
+    .check-list li::before { content: '\f00c'; font-family: "Font Awesome 6 Free"; font-weight: 900; position: absolute; left: 0; color: var(--primary); }
+
+    /* Grille 3 colonnes (Bas) */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        margin-top: 30px;
+    }
+
+    .feature-card {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .feature-card:hover { transform: translateY(-5px); }
+    .feature-card h4 { font-family: 'Space Grotesk'; font-size: 1.2rem; margin: 0 0 10px 0; color: var(--primary); }
+    .feature-card p { font-size: 0.95rem; color: #6b7280; line-height: 1.6; margin: 0; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .info-container { padding: 30px 20px; }
+        .features-grid { grid-template-columns: 1fr; }
+    }
     </style>
 </head>
 <body>
@@ -309,10 +363,31 @@
         </div>
     </header>
 
-    <section id="view-grid" class="view-section visible">
+<section id="view-grid" class="view-section visible">
+        
         <div class="hero-title">
             <h1>Observatoire National des Risques</h1>
-            <p>Plateforme de visualisation des aléas naturels et technologiques. Explorez les données territoriales françaises.</p>
+        </div>
+
+        <div class="info-container">
+            <div class="info-header">
+                <span class="info-tagline">Bienvenue sur la plateforme de référence</span>
+                <h2 class="info-title">Pour l'information sur les risques majeurs en France</h2>
+            </div>
+
+            <div class="content-block">
+                <h3 class="info-subtitle">Notre Engagement : La Sécurité Commence par la Connaissance</h3>
+                <p class="info-text">
+                    Nous vivons dans des territoires aux défis variés, qu'ils soient liés aux forces de la nature (crues, séismes) ou aux activités industrielles (sites Seveso, nucléaire). Le but de l'Observatoire des Risques (ONR) est de rendre ces informations complexes simples et accessibles à tous : citoyens, étudiants, élus locaux ou professionnels.
+                </p>
+                
+                <p class="info-text" style="font-weight:600; margin-top: 20px;">Ici, nous vous donnons les clés pour :</p>
+                <ul class="check-list">
+                    <li>Comprendre l'origine et l'impact de chaque risque (inondation, Radon, technologique, etc.).</li>
+                    <li>Se situer par rapport aux efforts de planification des risques dans votre département.</li>
+                    <li>Savoir adopter les bons réflexes pour vous protéger, vous et vos proches.</li>
+                </ul>
+            </div>
         </div>
 
         <div class="dashboard-grid">
@@ -320,8 +395,8 @@
                 <i class="fa-solid fa-cloud-showers-heavy bg-icon"></i>
                 <div class="big-card-content">
                     <h2>Carte Naturelle</h2>
-                    <p>Inondations, Séismes, Mouvements de terrain...</p>
-                    <div class="action-chip"><i class="fa-solid fa-arrow-right"></i> Accéder à la carte</div>
+                    <p>Inondations, Séismes, Mouvements...</p>
+                    <div class="action-chip"><i class="fa-solid fa-arrow-right"></i> Accéder</div>
                 </div>
             </div>
 
@@ -330,10 +405,38 @@
                 <div class="big-card-content">
                     <h2>Carte Technologique</h2>
                     <p>Sites Seveso, Nucléaire, ICPE...</p>
-                    <div class="action-chip"><i class="fa-solid fa-arrow-right"></i> Accéder à la carte</div>
+                    <div class="action-chip"><i class="fa-solid fa-arrow-right"></i> Accéder</div>
                 </div>
             </div>
         </div>
+
+        <div class="info-container bottom-section">
+            <div class="info-header">
+                <h2 class="info-title">Explorez les Risques Autour de Vous</h2>
+                <p class="info-text" style="margin-top:10px;">Ce site est conçu comme un outil pédagogique et interactif :</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <i class="fa-solid fa-map-location-dot" style="font-size:24px; color:#2563EB; margin-bottom:15px;"></i>
+                    <h4>Cartes Nationales de la Prévention</h4>
+                    <p>Consultez nos deux cartes synthétiques pour visualiser l'effort de planification des risques Naturels et Technologiques par département. Les indicateurs (taille des cercles) montrent le nombre de communes dotées d'un Plan de Prévention des Risques (PPR) dans chaque zone.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fa-solid fa-book-open" style="font-size:24px; color:#2563EB; margin-bottom:15px;"></i>
+                    <h4>Fiches Thématiques Claires</h4>
+                    <p>Chaque grand risque a sa page dédiée (nucléaire, inondation, séisme, etc.), présentée avec nos paragraphes synthétiques expliquant le risque, la réglementation, et les mesures simples de prévention à connaître.</p>
+                </div>
+
+                <div class="feature-card">
+                    <i class="fa-solid fa-timeline" style="font-size:24px; color:#2563EB; margin-bottom:15px;"></i>
+                    <h4>Les Dates qui Comptent</h4>
+                    <p>Des graphiques et des frises chronologiques contextualisent l'actualité des risques, vous montrant comment les grands événements nationaux ont fait évoluer notre sécurité et nos lois.</p>
+                </div>
+            </div>
+        </div>
+
     </section>
 
     <section id="view-map" class="view-section">
@@ -352,18 +455,69 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
    <script>
-    // --- 1. CONFIGURATION ---
+    // --- 1. CONFIGURATION AVEC LES TEXTES AJOUTÉS ---
     const detailsContent = {
-        'inondation': { title: "Inondations", color: "#3A6EA5", icon: "fa-water" },
-        // LES 5 FRISES (Mouvement, Nucléaire, Radon, Industriel, Séisme)
-        'mouvement': { title: "Mouvements de Terrain", color: "#8C6A43", icon: "fa-hill-rockslide" }, 
-        'nucleaire': { title: "Nucléaire", color: "#595530", icon: "fa-radiation" },
-        'radon': { title: "Radon", color: "#917280", icon: "fa-wind" },
-        'industriel': { title: "Risques Industriels", color: "#2c3e50", icon: "fa-industry" },
-        'seisme': { title: "Séismes", color: "#CB7166", icon: "fa-house-crack" } // Rouge Terre
+        'inondation': { 
+            title: "Inondations", 
+            color: "#3A6EA5", 
+            icon: "fa-water",
+            desc: `
+                <strong>Le Risque Inondation</strong><br>
+                Le risque d'inondation, le plus important des risques naturels en France, résulte de plusieurs phénomènes : crues de rivières (lentes ou éclairs), submersion marine sur le littoral, et ruissellement urbain dû à l'imperméabilisation des sols. L'enjeu majeur est la protection des 18,5 millions d'habitants vivant en zone inondable et la préservation du patrimoine économique exposé.<br><br>
+                La prévention repose sur le <strong>Plan de Prévention des Risques Inondation (PPRI)</strong>, qui est un document d'urbanisme réglementaire interdisant ou limitant la construction dans les zones dangereuses. Elle est complétée par des actions de réduction de la vulnérabilité du bâti existant (ex. : batardeaux) et par la compétence GEMAPI des collectivités, qui assure la gestion des cours d'eau et des ouvrages de protection (digues).`
+        },
+        'mouvement': { 
+            title: "Mouvements de Terrain", 
+            color: "#8C6A43", 
+            icon: "fa-hill-rockslide",
+            desc: `
+                <strong>Mouvements de Terrain</strong><br>
+                Les mouvements de terrain regroupent des phénomènes variés, allant de l'éboulement rocheux (chute brutale de blocs) aux glissements de terrain (déplacement lent ou rapide d'une masse de sol) et aux effondrements liés aux cavités souterraines (carrières, marnières). Ces risques sont particulièrement présents dans les massifs montagneux et les zones de falaises ou d'anciens ouvrages miniers.<br><br>
+                La prévention s'articule autour de la surveillance géotechnique des zones instables et du <strong>Plan de Prévention des Risques "Mouvements de Terrain" (PPRMT)</strong>. Le PPRMT réglemente les constructions en fonction de l'aléa (pente, nature du sol) et peut imposer des mesures de confortement (soutènements, drainage) ou des interdictions de construire. Un enjeu spécifique en France est la gestion des cavités souterraines (anciennes carrières ou marnières) dont les effondrements peuvent survenir sans signe précurseur, nécessitant des études approfondies du sous-sol avant toute urbanisation.`
+        }, 
+        'nucleaire': { 
+            title: "Nucléaire", 
+            color: "#595530", 
+            icon: "fa-radiation",
+            desc: `
+                <strong>Risque Nucléaire</strong><br>
+                Le risque nucléaire en France, lié aux centrales de production d'électricité et aux installations du cycle du combustible, est principalement celui d'un rejet de matières radioactives dans l'environnement. La prévention repose sur le principe de la <strong>défense en profondeur</strong> : une succession de barrières techniques (enceintes de confinement, systèmes de refroidissement de secours) visant à éviter l'accident, la gestion de la sûreté étant assurée par l'Autorité de Sûreté Nucléaire (ASN).<br><br>
+                Pour les populations, la prévention est axée sur la préparation à la crise. Autour de chaque installation, un <strong>Plan Particulier d'Intervention (PPI)</strong> est établi, définissant les périmètres d'urgence (rayon de 20km pour les centrales). Les mesures préventives incluent la distribution systématique de comprimés d'iode stable aux riverains pour saturer la thyroïde en cas de rejet radioactif, et l'organisation régulière d'exercices de simulation pour garantir l'efficacité des consignes de confinement et d'évacuation.`
+        },
+        'radon': { 
+            title: "Radon", 
+            color: "#917280", 
+            icon: "fa-wind",
+            desc: `
+                <strong>Le Radon</strong><br>
+                Le radon est un gaz radioactif d'origine naturelle, incolore et inodore, issu de la désintégration de l'uranium présent dans certains sols et roches (notamment granitiques et volcaniques). Il s'infiltre dans les bâtiments (par les fissures, les canalisations) et s'accumule si l'aération est insuffisante. C'est la deuxième cause de cancer du poumon en France après le tabagisme.<br>
+                La prévention est double :
+                <ul style="margin-top:5px; margin-bottom:5px;">
+                    <li><strong>Zonage :</strong> L'État a défini des zones à potentiel radon (zones 1, 2 et 3), obligeant les Établissements Recevant du Public (ERP), les lieux de travail et certains projets de construction dans les zones les plus exposées (zone 3) à réaliser des mesures.</li>
+                    <li><strong>Techniques de Construction :</strong> Pour le bâti neuf, la réglementation impose des mesures de protection comme la pose d'une membrane d'étanchéité sous la dalle et la mise en place de systèmes de ventilation/extraction pour empêcher le gaz de remonter et de s'accumuler à l'intérieur.</li>
+                </ul>`
+        },
+        'industriel': { 
+            title: "Risques Industriels", 
+            color: "#2c3e50", 
+            icon: "fa-industry",
+            desc: `
+                <strong>Risque Industriel Majeur (Seveso)</strong><br>
+                Le risque industriel majeur concerne les installations manipulant de grandes quantités de substances dangereuses, classées selon la Directive Seveso (Seuil Haut ou Seuil Bas). La prévention est fondée sur une double maîtrise.<br><br>
+                L'industriel est responsable de la <strong>Maîtrise Interne</strong>, élaborant des Études de Dangers (EDD) pour identifier les scénarios d'accident et mettre en place des systèmes de gestion des risques. Simultanément, l'État met en œuvre la <strong>Maîtrise Externe</strong> via les Plans de Prévention des Risques Technologiques (PPRT). Ces PPRT sont des documents d'urbanisme qui interdisent les nouvelles constructions dans les zones les plus exposées et obligent les propriétaires existants à réaliser des travaux de réduction de vulnérabilité (comme le renforcement des façades ou des vitrages) pour protéger efficacement les populations riveraines en cas de sinistre.`
+        },
+        'seisme': { 
+            title: "Séismes", 
+            color: "#CB7166", 
+            icon: "fa-house-crack",
+            desc: `
+                <strong>Risque Sismique</strong><br>
+                Le risque sismique en France, bien que modéré en métropole (notamment dans les Alpes, les Pyrénées et le fossé rhénan), est géré par une prévention rigoureuse des constructions. L'outil fondamental est le <strong>Zonage Sismique Réglementaire</strong>, qui classe les communes selon cinq niveaux d'aléa.<br><br>
+                La stratégie repose avant tout sur l'application de la réglementation parasismique, matérialisée par la norme européenne <strong>Eurocode 8</strong>. L'objectif n'est pas d'empêcher les dommages, mais de garantir que le bâtiment (en particulier les structures "à risque normal") ne s'effondre pas lors d'un séisme, préservant ainsi la vie de ses occupants. Cette prévention est complétée par l'identification des ouvrages stratégiques (hôpitaux, centres de secours) qui doivent rester opérationnels après une secousse.`
+        }
     };
 
-    // --- 2. NAVIGATION ---
+// --- 2. NAVIGATION (CORRIGÉE : CARTE NATURELLE GLOBALE) ---
     function switchView(name) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
         const view = document.getElementById('view-' + name);
@@ -375,21 +529,22 @@
         const iframe = document.getElementById('main-map-frame');
         document.getElementById('external-frame-container').style.display = 'block';
         document.getElementById('map').style.display = 'none'; 
-        let url = (mode === 'naturel') ? "https://clem6703.github.io/Inondation/" : "DEP_TECH-main/index.html";
+        
+        // CORRECTION ICI : On pointe vers DEP_NAT-main au lieu du lien Inondation
+        let url = (mode === 'naturel') ? "DEP_NAT-main/index.html" : "DEP_TECH-main/index.html";
+        
         if (riskType) url += "#" + riskType;
         iframe.src = url;
     }
 
-    function closeModal() {
-        const modal = document.getElementById('view-detail');
-        modal.classList.remove('visible');
-        setTimeout(() => modal.style.display = 'none', 300);
-    }
-
-    // --- 3. OUVERTURE MODALE ---
+    // --- 3. OUVERTURE MODALE (MAP EN HAUT, TEXTE EN BAS, SCROLL CLASSIQUE) ---
+    // --- 3. OUVERTURE MODALE (AVEC TOUS LES GRAPHIQUES : MOUV, NUC, IND) ---
     function openModal(key) {
         const d = detailsContent[key];
         if (!d) return;
+
+        // Style standard
+        let bodyStyle = "padding: 20px; overflow-y: auto; display: block;";
 
         let html = `
             <div class="modal-header">
@@ -399,14 +554,20 @@
                 </div>
                 <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="modal-body" style="padding: 20px;">`;
+            <div class="modal-body" style="${bodyStyle}">`;
 
-        // CAS INONDATION
+        // --- CAS 1 : INONDATION ---
         if (key === 'inondation') {
-            html += `<iframe src="https://clem6703.github.io/Inondation/" style="width:100%; height:500px; border:none;"></iframe>`;
+            html += `<iframe src="https://clem6703.github.io/Inondation/" style="width:100%; height:550px; border:none; border-radius: 12px; margin-bottom: 25px; display:block;"></iframe>`;
+            html += `<div class="risk-description" style="border-left-color: ${d.color};">${d.desc}</div>`;
         } 
-        // CAS FRISES (TOUTES LES FRISES)
+        
+        // --- CAS 2 : LES FRISES (Mouvement, Nucléaire, Industriel, etc.) ---
         else if (['mouvement', 'nucleaire', 'radon', 'industriel', 'seisme'].includes(key)) {
+            // 1. Texte
+            html += `<div class="risk-description" style="border-left-color: ${d.color}; margin-bottom: 25px;">${d.desc}</div>`;
+
+            // 2. Frise
             html += `
                 <div class="timeline-container">
                     <div class="timeline">
@@ -416,25 +577,57 @@
                     </div>
                 </div>
                 
-                <div class="details-box" id="details-box" style="border-top-color: ${d.color}">
+                <div class="details-box" id="details-box" style="border-top-color: ${d.color}; margin-bottom: 30px;">
                     <div class="details-text" id="text-container">
                         <h3 id="d-title" style="color:${d.color}">Sélectionnez une date</h3>
                         <p><strong>Année :</strong> <span id="d-year">-</span></p>
                         <p><strong id="d-headline"></strong></p>
                         <p id="d-desc"></p>
-                        
                         <div id="d-extras" style="display:none; margin-top:10px; padding:10px; background:#f4f4f4; border-radius:8px;">
                             <p><strong><span id="d-extra-label">Détail</span> :</strong> <span id="d-keydetail"></span></p>
                         </div>
-                        
                         <p id="d-impact-line"><em>Impact : <span id="d-impact"></span></em></p>
                     </div>
                     <div class="details-image" id="d-img-container"></div>
                 </div>`;
+
+            // --- 3. GRAPHIQUES EN BAS DE PAGE ---
+
+            // -> GRAPHIQUE MOUVEMENT
+            if (key === 'mouvement') {
+                html += `
+                <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
+                    <h3 style="font-family:'Space Grotesk'; font-size:1.2rem; margin-bottom:15px; color:${d.color}">Analyse des Mouvements</h3>
+                    <iframe src="https://latouane512.github.io/Diagramme_mouvement_terrain/" style="width:100%; height:500px; border:none; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);"></iframe>
+                </div>`;
+            }
+
+            // -> GRAPHIQUE NUCLÉAIRE (ROGNÉ)
+            if (key === 'nucleaire') {
+                html += `
+                <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
+                    <h3 style="font-family:'Space Grotesk'; font-size:1.2rem; margin-bottom:15px; color:${d.color}">Répartition par niveau INES</h3>
+                    <div style="position: relative; width: 100%; height: 500px; overflow: hidden; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+                        <iframe src="https://latouane512.github.io/diagramme_nucl-aire_INES/" style="position: absolute; top: -70px; left: 0; width: 100%; height: calc(100% + 70px); border:none;"></iframe>
+                    </div>
+                </div>`;
+            }
+
+            // -> GRAPHIQUE INDUSTRIEL (NOUVEAU)
+            if (key === 'industriel') {
+                html += `
+                <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
+                    <h3 style="font-family:'Space Grotesk'; font-size:1.2rem; margin-bottom:15px; color:${d.color}">Répartition des sites Seveso</h3>
+                    <iframe src="https://latouane512.github.io/Diagramme_seveso/" style="width:100%; height:500px; border:none; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);"></iframe>
+                </div>`;
+            }
         } 
-        // AUTRES
+        
+        // --- CAS 3 : AUTRES ---
         else {
-            html += `<div style="padding:40px; text-align:center;">${d.desc || "Information à venir."}</div>`;
+             html += `
+                <div class="risk-description" style="border-left-color: ${d.color}; margin-bottom: 25px;">${d.desc}</div>
+                <div style="padding:40px; text-align:center;">Information à venir.</div>`;
         }
 
         html += `</div>`; // Fin body
@@ -444,44 +637,48 @@
         modal.style.display = 'flex';
         setTimeout(() => modal.classList.add('visible'), 10);
 
-        // Lancement Frise
         if (['mouvement', 'nucleaire', 'radon', 'industriel', 'seisme'].includes(key)) {
             setTimeout(() => { initTimeline(key, d.color); }, 50);
         }
     }
 
     // --- 4. LOGIQUE FRISE ---
-    // --- LOGIQUE FRISE (MOUVEMENT, NUCLEAIRE, RADON, INDUSTRIEL, SEISME) ---
-// --- LOGIQUE FRISE (MOUVEMENT, NUCLEAIRE, RADON, INDUSTRIEL, SEISME) ---
-// --- LOGIQUE FRISE (MOUVEMENT, NUCLEAIRE, RADON, INDUSTRIEL, SEISME) ---
     function initTimeline(type, color) {
         
         // 1. Données Mouvements (Marron)
         const dataMouv = [
-            { year: 1953, t: "L’Harmalière", h: "Effondrement majeur en Isère.", d: "Le versant du Mont Saint-Eynard a connu un effondrement de plusieurs dizaines de milliers de m³.", i: "3 morts.", img: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Eboulement_de_La_Rivi%C3%A8re_en_mars_2025.jpg" },
-            { year: 1970, t: "La Clapière", h: "Glissement actif.", d: "Masse rocheuse instable de 50 millions de m³ déplacée à vitesse record.", i: "Menace la vallée.", img: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Glissement_de_terrain_de_la_Clapi%C3%A8re.jpg" },
-            { year: 1987, t: "Séchilienne", h: "Instabilité du Mont Sec.", d: "Risque d'éboulement majeur pouvant créer un barrage naturel.", i: "Surveillance 24/7.", img: "https://upload.wikimedia.org/wikipedia/commons/6/64/Ruines_de_S%C3%A9chilienne_le_14-07-06.jpg" },
-            { year: 1992, t: "Mont Granier", h: "Réactivation historique.", d: "Chutes de roches massives sur ce site connu pour la catastrophe de 1248.", i: "Routes menacées.", img: "https://upload.wikimedia.org/wikipedia/commons/3/30/Mont_Granier_depuis_Chapareillan.JPG" },
-            { year: 2020, t: "Tempête Alex", h: "Crues et glissements.", d: "Pluies extrêmes provoquant des coulées de boue dévastatrices.", i: "Destruction majeure.", img: "https://upload.wikimedia.org/wikipedia/commons/9/96/V%C3%A9subie_apr%C3%A8s_la_temp%C3%AAte_Alex_-_Roquebilli%C3%A8re_-_2020-10-06.jpg" }
+            { year: 1953, t: "Éboulement de l’Harmalière", h: "Effondrement rocheux majeur et tragique en Isère.", d: "Le versant du Mont Saint-Eynard, près de Grenoble, a connu un effondrement majeur de plusieurs dizaines de milliers de mètres cubes de roches. L'événement a coupé la route nationale et détruit des habitations.", i: "3 morts et des destructions de biens considérables.", movement: "Éboulement / Chute de blocs", img: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Eboulement_de_La_Rivi%C3%A8re_en_mars_2025.jpg"},
+            { year: 1963, t: "Éboulement de Sainte-Étienne-de-Tinée", h: "Éboulement rocheux majeur et tragédie en montagne.", d: "Le village de Saint-Étienne-de-Tinée a été frappé par un important éboulement rocheux sur la rive gauche de la Tinée. Cet événement a provoqué la destruction de maisons et a coupé des voies de communication.", i: "Plusieurs morts et des destructions de biens considérables.", movement: "Éboulement / Chute de blocs", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Glissement_de_terrain_de_la_Clapi%C3%A8re%2C_Saint-%C3%89tienne-de-Tin%C3%A9e%2C_France.jpg/1200px-Glissement_de_terrain_de_la_Clapi%C3%A8re%2C_Saint-%C3%89tienne-de-Tin%C3%A9e%2C_France.jpg"},
+            { year: 1970, t: "Glissement de La Clapière", h: "Un glissement de terrain parmi les plus actifs d'Europe.", d: "Déclenché en 1970, ce glissement est situé près de Saint-Étienne-de-Tinée. Il est caractérisé par une masse rocheuse instable de 50 millions de m³ qui s'est déplacée à des vitesses records au cours des années 1980.", i: "Menace constante sur la route nationale (RN 202) et le village. Nécessité d'une surveillance continue et de travaux de stabilisation.", movement: "Glissement de terrain (actif)", img: "https://www.encyclopedie-environnement.org/app/uploads/2019/06/clapiere_fig6-2016.jpg"},
+            { year: 1987, t: "Glissement de terrain de Séchilienne", h: "Instabilité majeure du versant du Mont Sec, surveillance nationale.", d: "Ce glissement affecte le versant du Mont Sec au-dessus du village de Séchilienne, menaçant la vallée de la Romanche. Classé comme un risque majeur nécessitant une surveillance permanente et des plans d'urgence en cas de purge catastrophique.", i: "Risque permanent d'éboulement de plusieurs millions de m³ pouvant couper la vallée. Nécessite une surveillance constante.", movement: "Glissement de terrain (latent)",img: "https://upload.wikimedia.org/wikipedia/commons/6/64/Ruines_de_S%C3%A9chilienne_le_14-07-06.jpg"},
+            { year: 1992, t: "Éboulement du Mont Granier", h: "Réactivation d'effondrements importants en Savoie.", d: "Le Mont Granier, déjà célèbre pour son effondrement historique en 1248, a connu une réactivation en 1992 avec des chutes de roches massives. L'événement a confirmé l'instabilité de ce versant calcaire.", i: "Plusieurs millions de m³ mobilisés. Routes et hameaux menacés. Pas de victimes.", movement: "Éboulement / Chute de blocs", img: "https://cdn-s-www.ledauphine.com/images/8D3FB866-6A0C-44BC-9390-357A240B07E7/MF_contenu/50-000-m3-de-roches-sont-tombes-au-mont-granier-hier-matin-1462609866.jpg"},
+            { year: 2003, t: "Glissement de La Salle-en-Beaumont", h: "Mouvements rapides liés aux fortes pluies d’automne.", d: "Des mouvements de terrain rapides, déclenchés par des précipitations exceptionnelles, ont affecté ce secteur en Isère. Plusieurs habitations ont été endommagées, forçant des évacuations préventives.", i: "Habitations endommagées, évacuations. Aucune victime.", movement: "Glissement de terrain rapide", img: "https://france3-regions.franceinfo.fr/image/Qy6yiYXL3Dh3szdO6OU20bJSzaQ/0x0:500x281/800x450/filters:format(webp)/regions/2020/06/08/5ede81e65a154_beaumont_2.jpg"},
+            { year: 2016, t: "Glissement de terrain de Villard-de-Lans", h: "Instabilité importante sur les falaises du Vercors.", d: "Un effondrement rocheux a coupé la route départementale RD531, principale voie d'accès vers la station de Villard-de-Lans. L'instabilité des falaises du Vercors a nécessité des travaux de sécurisation longs et coûteux.", i: "Coupure d'une voie de communication majeure, nécessité de travaux d'urgence.", movement: "Éboulement / Instabilité de versant", img: "https://img.lemde.fr/2015/07/26/577/0/4287/2139/1342/671/60/0/3237ab7_5013471-01-06.jpg"},
+            { year: 2020, t: "Tempête Alex et Glissements", h: "Glissements associés aux crues éclairs de la tempête.", d: "Les pluies extrêmes apportées par la tempête Alex ont provoqué des crues record et de nombreux glissements de terrain et coulées de boue. Ces mouvements de masse ont amplifié les destructions, emportant des routes et déstabilisant des pans entiers de vallées.", i: "Dégâts matériels majeurs, routes et infrastructures détruites, s'ajoutant aux destructions liées aux inondations (Alpes-Maritimes, Vallées de la Vésubie et de la Roya).", movement: "Glissements multiples et coulées de boue", img: "https://www.irma-grenoble.com/photos/st-martin-vesubie/361w001EP_Alpes-Maritimes-inondation_02-10-2020/361w260EP.jpg"}
         ];
 
         // 2. Données Nucléaire (Vert)
         const dataNuc = [
-            { year: 1969, t: "St-Laurent A1", h: "Fusion partielle (INES 4).", d: "Erreur de chargement entraînant la fusion de 50kg d'uranium.", i: "Contamination interne.", img: "https://upload.wikimedia.org/wikipedia/commons/3/39/A1_A2_saint_laurent_FK.jpg" },
-            { year: 1980, t: "St-Laurent A2", h: "Accident INES 4.", d: "Fusion de combustible due à la corrosion.", i: "Arrêt définitif filière.", img: "https://upload.wikimedia.org/wikipedia/commons/f/f9/HD.15.076_%2811840243393%29.jpg" },
-            { year: 1999, t: "Le Blayais", h: "Inondation centrale.", d: "Tempête Martin : submersion partielle et perte de systèmes de sûreté.", i: "Arrêt d'urgence.", img: "https://upload.wikimedia.org/wikipedia/commons/d/d6/Centrale_nucl%C3%A9aire_du_Blayais_2012.jpg" },
-            { year: 2008, t: "Tricastin", h: "Fuite uranium.", d: "Déversement accidentel de 74kg d'uranium dans les rivières.", i: "Interdiction consommation eau.", img: "https://upload.wikimedia.org/wikipedia/commons/6/65/Site_nucl%C3%A9aire_Tricastin.jpg" },
-            { year: 2011, t: "Fukushima (Impact)", h: "Stress tests.", d: "Suite à la catastrophe japonaise, audit complet du parc français.", i: "Renforcement normes (ASN).", img: "https://upload.wikimedia.org/wikipedia/commons/0/04/Fukushima_I_nuclear_accidents_radioactive_cloud_dispersion_2011-03-16_1639_UTC.jpg" }
+            { year: 1969, t: "Fusion partielle à Saint-Laurent-des-Eaux", h: "Le plus grave incident nucléaire français (INES 4).", d: "Une erreur de manipulation lors du chargement de combustible dans le réacteur A1 (filière UNGG, arrêtée depuis) a provoqué la fusion partielle d'une dizaine d'éléments combustibles. L'accident a entraîné une contamination du réacteur et de ses circuits.", i: "Contamination interne du réacteur, mais sans impact majeur sur l'environnement externe ou la population. L'unité A1 a été arrêtée et nettoyée pendant un an.", keyDetail: "Niveau 4 (Accident ayant des conséquences locales)", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/A1_A2_saint_laurent_FK.jpg/500px-A1_A2_saint_laurent_FK.jpg"},
+            { year: 1979, t: "Fuite radioactive au site de Saclay", h: "Échappement de fluides radioactifs dans le bassin versant local.", d: "Des fluides faiblement radioactifs se sont échappés dans des drains initialement prévus pour des déchets non contaminés et se sont infiltrés dans le bassin versant local. Cet incident a souligné les problèmes de gestion et de surveillance des déchets sur les sites de recherche.", i: "Contamination locale des sols et des eaux souterraines. Impact environnemental limité mais incident marquant pour la sûreté.", keyDetail: "Non classé ou INES inférieur à 2 (selon les sources)", img: "https://www.connaissancedesenergies.org/sites/connaissancedesenergies.org/files/styles/image_370px_large/public/image_article/Fukushima-Daiichi-FP.jpg?itok=liXbBqF1"},
+            { year: 1980, t: "Deuxième accident à Saint-Laurent-des-Eaux", h: "Nouveau dysfonctionnement de combustible (INES 4).", d: "Onze ans après le premier événement, un nouveau problème de fusion de combustible (due cette fois à une corrosion) s'est produit sur le réacteur A2. Bien que de gravité similaire (classé INES 4), cet événement a renforcé la décision d'arrêter définitivement la filière UNGG à Saint-Laurent.", i: "Contamination du réacteur A2. L'événement a précipité l'arrêt définitif des réacteurs A en 1990.", keyDetail: "Niveau 4 (Accident ayant des conséquences locales)", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/HD.15.076_%2811840243393%29.jpg/500px-HD.15.076_%2811840243393%29.jpg" },
+            { year: 1981, t: "Incendie d’un silo à La Hague", h: "Incendie d’un silo de stockage de déchets solides.", d: "Un incendie couvant s'est déclaré dans un silo de stockage de déchets solides sur le site de retraitement de La Hague, entraînant l'intervention des services d'urgence. L'incident a soulevé des questions sur la gestion à long terme des déchets et la sûreté des installations de stockage.", i: "Contamination radioactive localisée. L'incident a provoqué des inquiétudes et des critiques sur la gestion des déchets.",keyDetail: "Niveau 2 (Incident)",img: "https://static.actu.fr/uploads/2024/12/37bfa117705766bbfa11770573fbfav.jpg"},
+            { year: 1984, t: "Incident à la centrale nucléaire du Bugey", h: "Panne électrique au centre de commande d'un réacteur.", d: "Une panne électrique a affecté le centre de commande d'un réacteur, forçant son arrêt automatique et complet. L'incident a mis en évidence des vulnérabilités dans l'alimentation électrique et les systèmes de secours de la centrale.", i: "Arrêt forcé d'un réacteur. Classé incident modéré, mais a mené à l'amélioration des dispositifs de sécurité électrique.", keyDetail: "Niveau 2 (Incident)", img: "https://cdn-s-www.ledauphine.com/images/87512A6F-477B-45CE-8C9F-82BBDABCBD43/NW_raw/title-1390987973.jpg"},
+            { year: 1999, t: "Inondation de la Centrale de Blayais", h: "Submersion des digues suite à la tempête de 1999.", d: "Lors de la grande tempête de décembre 1999, la montée des eaux de la Gironde a submergé les digues de protection de la centrale. Plusieurs systèmes de sécurité essentiels (pompes) se sont trouvés hors service, conduisant à l'arrêt d'urgence de plusieurs réacteurs.", i: "Arrêt d'urgence de réacteurs. A conduit à une révision majeure de la prise en compte du risque d'agressions externes (inondations) sur toutes les centrales françaises.", keyDetail: "Niveau 2 (Incident)",img: "https://media.sudouest.fr/9775433/1200x-1/so-57ecd02466a4bdbe429d2579-ph0.jpg"},
+            { year: 2008, t: "Fuite d’uranium à Tricastin", h: "Déversement de solution d'uranium naturel non enrichi.", d: "Une rupture de canalisation a entraîné le déversement d'environ 30 m³ de solution d'uranium naturel dissous (non enrichi) dans des sols et des cours d'eau. L'impact médiatique a été très important, suscitant une vive inquiétude, bien que la radioactivité de l'uranium naturel soit faible.", i: "Déversement dans la nappe phréatique et des rivières. Contamination chimique locale. Fort impact sur la crédibilité de l'opérateur.", keyDetail: "Niveau 1 (Anomalie)",img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Site_nucl%C3%A9aire_Tricastin.jpg/500px-Site_nucl%C3%A9aire_Tricastin.jpg"},
+            { year: 2022, t: "Incendie sur un transformateur à Penly", h: "Incendie majeur sur un équipement auxiliaire (hors cœur).", d: "Un incendie s'est déclaré sur un transformateur du réacteur 1, dans la salle des machines. Le réacteur s'est arrêté automatiquement. Classé INES 1, l'événement a nécessité une intervention massive et a été très médiatisé, rappelant les risques liés aux équipements conventionnels (non nucléaires) des centrales.", i: "Arrêt automatique du réacteur. Dégâts matériels sur le transformateur. Pas d'impact direct sur la sûreté nucléaire ou l'environnement.", keyDetail: "Niveau 1 (Anomalie)", img: "https://medias.tendanceouest.com/photos/1200/419205/?v=1716879203"}
         ];
 
         // 3. Données Radon (Violet)
         const dataRadon = [
-            { year: 1999, t: "Premier Zonage", h: "Création des zones prioritaires.", d: "Début de la prise en compte réglementaire du risque radon.", i: "Identification des classes 1, 2 et 3.", keyDetail: "Zonage initial" },
-            { year: 2002, t: "Écoles", h: "Recommandations scolaires.", d: "Première obligation de surveillance dans les lieux recevant des enfants.", i: "Mesure obligatoire.", keyDetail: "Protection enfance" },
-            { year: 2010, t: "Bâtiments Publics", h: "Extension surveillance.", d: "Obligation étendue à certains bâtiments publics et souterrains.", i: "Surveillance accrue.", keyDetail: "ERP et souterrains" },
-            { year: 2015, t: "Directive UE", h: "Réglementation Européenne.", d: "Transposition de la directive Euratom. Seuil fixé à 300 Bq/m³.", i: "Harmonisation européenne.", keyDetail: "Seuil 300 Bq/m³" },
-            { year: 2018, t: "Nouveau Zonage", h: "Zonage à la commune.", d: "Le zonage devient plus précis (5 catégories).", i: "Mesure obligatoire étendue.", keyDetail: "Zonage précis" },
-            { year: 2022, t: "Constructions", h: "Normes construction.", d: "Nouvelles recommandations pour l'étanchéité des bâtiments neufs.", i: "Prévention dès la construction.", keyDetail: "Normes BTP" }
+            { year: 1999, t: "Premier Zonage Officiel Radon", h: "Création des premières zones d'action prioritaire.", d: "L'établissement de ce premier zonage (3 catégories) a marqué le début de la prise en compte réglementaire du risque lié au radon, gaz radioactif d'origine naturelle, dans l'habitat et les lieux de travail.", i: "Identification des zones à risque et premières recommandations (Classes 1, 2 et 3).", keyDetail: "Zonage initial (3 classes)",},
+            { year: 2002, t: "Circulaire Radon dans les Écoles", h: "Premières recommandations ciblées pour les établissements scolaires.", d: "Cette circulaire a établi les premières recommandations spécifiques visant à mesurer et limiter l'exposition au radon dans les établissements scolaires. Elle initie l'obligation de surveillance dans les lieux recevant des enfants.", i: "Première obligation de mesure pour les bâtiments recevant du public sensible (écoles).", keyDetail: "Recommandations pour les écoles",},
+            { year: 2008, t: "Guide IRSN sur la Prévention Radon dans l’Habitat", h: "Publication de recommandations pour l'aération et l'étanchéité des bâtiments.", d: "L'IRSN (Institut de Radioprotection et de Sûreté Nucléaire) a publié un guide détaillé fournissant des recommandations techniques pour réduire les concentrations de radon dans l'habitat existant, notamment via l'amélioration de l'aération et de l'étanchéité.", i: "Diffusion des bonnes pratiques techniques pour les particuliers et professionnels du bâtiment.", keyDetail: "Recommandations d'aération et étanchéité", },
+            { year: 2010, t: "Décret imposant la surveillance dans certains bâtiments publics", h: "Extension de l'obligation de mesure à certains bâtiments publics.", d: "Ce décret a étendu l'obligation de surveillance du radon à certaines catégories de bâtiments recevant du public ou présentant des caractéristiques spécifiques (comme les ouvrages souterrains ou les bâtiments à forte fréquentation) situés dans les zones à risque.", i: "Augmentation des catégories de bâtiments soumis à l'obligation de mesure.", keyDetail: "Mesure obligatoire dans certains ERP et souterrains",},
+            { year: 2015, t: "Intégration du radon dans la Réglementation Européenne", h: "Transposition de la Directive Euratom 2013/59 en droit français.", d: "La France a transposé la directive européenne Euratom 2013/59, établissant des limites d'exposition au radon harmonisées pour les travailleurs et les bâtiments accessibles au public. Cela a fixé le seuil de référence à 300 Bq/m³ pour les bâtiments.", i: "Harmonisation des seuils d'exposition et consolidation de l'obligation de gestion du risque.", keyDetail: "Seuil de référence à 300 Bq/m³",},
+            { year: 2018, t: "Nouveau Zonage et Mesures dans les ERP", h: "Introduction d'un nouveau zonage et extension des obligations.", d: "La réglementation a été renforcée avec l'introduction d'un nouveau zonage (5 catégories de communes) et la consolidation de l'obligation de mesurer le radon dans les Établissements Recevant du Public (ERP) situés dans les zones prioritaires.", i: "L'obligation de mesure s'étend aux ERP et aux lieux de travail dans les zones à risque. Le zonage devient plus précis.", keyDetail: "Nouveau zonage et mesures obligatoires dans les ERP",},
+            { year: 2020, t: "Mise à jour de la Carte du Potentiel Radon (IRSN)", h: "Affinement des zones à risque par l'IRSN.", d: "L'IRSN (Institut de Radioprotection et de Sûreté Nucléaire) publie une version affinée de la carte du potentiel radon, utilisant des données géologiques plus précises pour identifier les communes où le risque est le plus élevé. Cette carte sert de référence aux autorités.", i: "Meilleure connaissance et délimitation des zones à risque (Zones 1, 2, 3), facilitant l'application des mesures réglementaires.", keyDetail: "Données géologiques affinées",},
+            { year: 2022, t: "Nouvelle carte et seuils actualisés", h: "Actualisation des zones à risque et nouvelles recommandations pour la construction.", d: "Mise à jour des zones à risque et des seuils, accompagnée de nouvelles recommandations pour les professionnels du bâtiment concernant les rénovations et les constructions neuves, afin d'assurer la protection contre les infiltrations de radon.", i: "Renforcement des exigences pour les constructions et rénovations dans les zones à fort potentiel radon.", keyDetail: "Recommandations pour les constructions et rénovations",}
         ];
 
         // 4. Données Industriel (Gris - IMAGES CORRIGÉES)
@@ -497,14 +694,14 @@
 
         // 5. Données Séisme (Rouge)
         const dataSei = [
-            { year: 1909, t: "Séisme de Lambesc", h: "Le plus fort séisme moderne en France métropolitaine.", d: "Séisme dévastateur dans la région de la Durance. Les dégâts ont été particulièrement importants dans les villages de Rognes, Saint-Cannat et Lambesc, avec de nombreux effondrements de maisons.", i: "46 morts (bilan officiel), plusieurs centaines de blessés.", Magnitude: "~6", img: "https://upload.wikimedia.org/wikipedia/commons/6/69/Vern%C3%A8gues_-_tremblement_de_terre_du_11_juin_1909_%281%29.jpg" },
-            { year: 1967, t: "Séisme d’Arette", h: "Destruction d'un village des Pyrénées-Atlantiques.", d: "Le séisme s'est produit à 6h43 du matin. Il a causé l'effondrement de plusieurs bâtiments dans le village d'Arette, nécessitant une reconstruction quasi-totale. Les secousses ont été ressenties jusqu'à Bordeaux et Toulouse.", i: "1 mort (par crise cardiaque), plusieurs blessés. Village détruit à 80 %.", Magnitude: "~5.3", img: "https://image.jimcdn.com/app/cms/image/transf/none/path/sad38b0da414a0498/image/if071a249d2638b34/version/1391488591/image.jpg"},
-            { year: 1980, t: "Séisme d’Arudy", h: "Dégâts importants dans la vallée d’Ossau (Pyrénées).", d: "Séisme majeur dans les Pyrénées. Il a provoqué des dégâts significatifs sur le bâti traditionnel dans la vallée d'Ossau, nécessitant l'intervention de l'armée et de lourds travaux de réhabilitation.", i: "70 blessés légers, dégâts matériels importants dans les villages comme Arudy et Bielle.", Magnitude: "5.1", img: "https://media.sudouest.fr/19802572/1200x600/sudouest-photo-1-3486425.jpg"},
-            { year: 2003, t: "Séisme de Rambervillers", h: "Fortement ressenti dans le Grand Est.", d: "Ce séisme, bien que modéré, a été l'un des plus puissants enregistrés dans le Nord-Est de la France, une zone de sismicité historiquement plus faible. Il a causé des dégâts non structurels (fissures, chutes de cheminées) sur un large périmètre.", i: "Dégâts matériels légers à modérés (fissures). Pas de victimes directes, mais forte frayeur de la population.", Magnitude: "5.4", img: "https://cdn-s-www.vosgesmatin.fr/images/8b0bdeea-64c6-4081-98a4-c13eab1f8476/NW_raw/le-haut-de-la-commune-de-deneuvre-a-ete-le-plus-eprouve-le-22-fevrier-2003-photo-d-archives-er-1573491412.jpg"},
-            { year: 2011, t: "Séisme de La Rochelle / Charente-Maritime", h: "Dégâts sur les bâtis anciens de la côte atlantique.", d: "Séisme ressenti sur une large partie de l'Ouest de la France. Il a principalement endommagé des constructions anciennes et fragiles en Charente-Maritime, notamment dans la région de La Rochelle.", i: "Dégâts matériels sur des centaines de maisons, mais faible bilan humain.", Magnitude: "4.9", img: "https://france3-regions.franceinfo.fr/image/JrXZQcYRKlT-OS7W5hg3e_sUuYE/1200x1200/regions/2023/06/16/648cc8e925886_maison-cram-chaban.jpg"},
-            { year: 2014, t: "Séisme de Barcelonnette", h: "Fissurations multiples et rappels sur le risque alpin.", d: "Ce séisme, peu profond, a causé des fissurations sur de nombreux bâtiments dans la vallée de l'Ubaye. Bien qu'il n'ait pas été destructeur, il a rappelé l'activité sismique de l'arc alpin.", i: "Fissurations sur environ 1500 bâtiments. Pas de victimes.", magnitude: "4.8", img: "https://images.ladepeche.fr/api/v1/images/view/5c2e78f13e454606256925c6/large/image.jpg" },
-            { year: 2019, t: "Séisme du Teil", h: "Séisme exceptionnel en zone de faible sismicité.", d: "Ce séisme, bien que de magnitude modérée, a été le plus puissant de France depuis 1967. Sa faible profondeur a amplifié les dégâts, causant l'évacuation d'environ 300 personnes dans la commune du Teil.", i: "4 blessés légers. Dégâts majeurs, plusieurs centaines de bâtiments endommagés.", Magnitude: "5.4",  img: "https://www.francebleu.fr/pikapi/images/d7f5af8a-cf84-4303-a49a-58283d30fc54/1200x680" },
-            { year: 2022, t: "Séisme de La Tour-d’Auvergne", h: "Dégâts inhabituels pour la région Auvergne.", d: "Séisme le plus important de ces dernières décennies dans le Massif Central. Bien que d'intensité modérée, il a causé des dégâts sur le bâti ancien et a été largement ressenti, soulignant le risque sismique latent dans la région.", i: "Dégâts légers sur le bâti (fissures, cheminées). Pas de victimes.", Magnitude: "4.8", img: "https://www.francebleu.fr/pikapi/images/ebd187e1-d947-4817-abc7-3fb4054bb4a3/1200x680?webp=false"}
+            { year: 1909, t: "Séisme de Lambesc", h: "Le plus fort séisme moderne en France métropolitaine.", d: "Séisme dévastateur dans la région de la Durance. Les dégâts ont été particulièrement importants dans les villages de Rognes, Saint-Cannat et Lambesc, avec de nombreux effondrements de maisons.", i: "46 morts (bilan officiel), plusieurs centaines de blessés.", keyDetail: "~6", img: "https://upload.wikimedia.org/wikipedia/commons/6/69/Vern%C3%A8gues_-_tremblement_de_terre_du_11_juin_1909_%281%29.jpg" },
+            { year: 1967, t: "Séisme d’Arette", h: "Destruction d'un village des Pyrénées-Atlantiques.", d: "Le séisme s'est produit à 6h43 du matin. Il a causé l'effondrement de plusieurs bâtiments dans le village d'Arette, nécessitant une reconstruction quasi-totale. Les secousses ont été ressenties jusqu'à Bordeaux et Toulouse.", i: "1 mort (par crise cardiaque), plusieurs blessés. Village détruit à 80 %.", keyDetail: "~5.3", img: "https://image.jimcdn.com/app/cms/image/transf/none/path/sad38b0da414a0498/image/if071a249d2638b34/version/1391488591/image.jpg"},
+            { year: 1980, t: "Séisme d’Arudy", h: "Dégâts importants dans la vallée d’Ossau (Pyrénées).", d: "Séisme majeur dans les Pyrénées. Il a provoqué des dégâts significatifs sur le bâti traditionnel dans la vallée d'Ossau, nécessitant l'intervention de l'armée et de lourds travaux de réhabilitation.", i: "70 blessés légers, dégâts matériels importants dans les villages comme Arudy et Bielle.", keyDetail: "5.1", img: "https://media.sudouest.fr/19802572/1200x600/sudouest-photo-1-3486425.jpg"},
+            { year: 2003, t: "Séisme de Rambervillers", h: "Fortement ressenti dans le Grand Est.", d: "Ce séisme, bien que modéré, a été l'un des plus puissants enregistrés dans le Nord-Est de la France, une zone de sismicité historiquement plus faible. Il a causé des dégâts non structurels (fissures, chutes de cheminées) sur un large périmètre.", i: "Dégâts matériels légers à modérés (fissures). Pas de victimes directes, mais forte frayeur de la population.", keyDetail: "5.4", img: "https://cdn-s-www.vosgesmatin.fr/images/8b0bdeea-64c6-4081-98a4-c13eab1f8476/NW_raw/le-haut-de-la-commune-de-deneuvre-a-ete-le-plus-eprouve-le-22-fevrier-2003-photo-d-archives-er-1573491412.jpg"},
+            { year: 2011, t: "Séisme de La Rochelle / Charente-Maritime", h: "Dégâts sur les bâtis anciens de la côte atlantique.", d: "Séisme ressenti sur une large partie de l'Ouest de la France. Il a principalement endommagé des constructions anciennes et fragiles en Charente-Maritime, notamment dans la région de La Rochelle.", i: "Dégâts matériels sur des centaines de maisons, mais faible bilan humain.", keyDetail: "4.9", img: "https://france3-regions.franceinfo.fr/image/JrXZQcYRKlT-OS7W5hg3e_sUuYE/1200x1200/regions/2023/06/16/648cc8e925886_maison-cram-chaban.jpg"},
+            { year: 2014, t: "Séisme de Barcelonnette", h: "Fissurations multiples et rappels sur le risque alpin.", d: "Ce séisme, peu profond, a causé des fissurations sur de nombreux bâtiments dans la vallée de l'Ubaye. Bien qu'il n'ait pas été destructeur, il a rappelé l'activité sismique de l'arc alpin.", i: "Fissurations sur environ 1500 bâtiments. Pas de victimes.", keyDetail: "4.8", img: "https://images.ladepeche.fr/api/v1/images/view/5c2e78f13e454606256925c6/large/image.jpg" },
+            { year: 2019, t: "Séisme du Teil", h: "Séisme exceptionnel en zone de faible sismicité.", d: "Ce séisme, bien que de magnitude modérée, a été le plus puissant de France depuis 1967. Sa faible profondeur a amplifié les dégâts, causant l'évacuation d'environ 300 personnes dans la commune du Teil.", i: "4 blessés légers. Dégâts majeurs, plusieurs centaines de bâtiments endommagés.", keyDetail: "5.4",  img: "https://www.francebleu.fr/pikapi/images/d7f5af8a-cf84-4303-a49a-58283d30fc54/1200x680" },
+            { year: 2022, t: "Séisme de La Tour-d’Auvergne", h: "Dégâts inhabituels pour la région Auvergne.", d: "Séisme le plus important de ces dernières décennies dans le Massif Central. Bien que d'intensité modérée, il a causé des dégâts sur le bâti ancien et a été largement ressenti, soulignant le risque sismique latent dans la région.", i: "Dégâts légers sur le bâti (fissures, cheminées). Pas de victimes.", keyDetail: "4.8", img: "https://www.francebleu.fr/pikapi/images/ebd187e1-d947-4817-abc7-3fb4054bb4a3/1200x680?webp=false"}
         ];
 
         // SÉLECTION DES DONNÉES
