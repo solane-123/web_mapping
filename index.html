@@ -316,7 +316,9 @@
         
         <div class="nav-container">
             <button class="nav-btn active" onclick="switchView('grid')">Accueil</button>
-
+            <button class="nav-btn" onclick="openModal('donnees')">
+                <i class="fa-solid fa-database"></i> Données
+            </button>
             <div class="dropdown">
                 <button class="dropdown-trigger">
                     Naturels <i class="fa-solid fa-chevron-down"></i>
@@ -514,6 +516,70 @@
                 <strong>Risque Sismique</strong><br>
                 Le risque sismique en France, bien que modéré en métropole (notamment dans les Alpes, les Pyrénées et le fossé rhénan), est géré par une prévention rigoureuse des constructions. L'outil fondamental est le <strong>Zonage Sismique Réglementaire</strong>, qui classe les communes selon cinq niveaux d'aléa.<br><br>
                 La stratégie repose avant tout sur l'application de la réglementation parasismique, matérialisée par la norme européenne <strong>Eurocode 8</strong>. L'objectif n'est pas d'empêcher les dommages, mais de garantir que le bâtiment (en particulier les structures "à risque normal") ne s'effondre pas lors d'un séisme, préservant ainsi la vie de ses occupants. Cette prévention est complétée par l'identification des ouvrages stratégiques (hôpitaux, centres de secours) qui doivent rester opérationnels après une secousse.`
+        },
+        'donnees': { 
+            title: "Comprendre la Donnée", 
+            color: "#4B5563", // Gris foncé neutre
+            icon: "fa-database",
+            desc: `
+                <div style="font-size: 0.95rem; line-height: 1.6;">
+                    <h3 style="font-family: 'Space Grotesk'; font-size: 1.4rem; margin-bottom: 10px; color: #111827;">MÉTADONNÉE – Données Risques Naturels et Technologiques</h3>
+                    
+                    <p style="background: #f3f4f6; padding: 15px; border-radius: 8px; border-left: 4px solid #4B5563;">
+                        <strong>Résumé :</strong> Ensemble de données utilisées pour analyser l’évolution des séismes, mouvements de terrain, inondations, accidents industriels, incidents nucléaires et informations sur le radon.
+                    </p>
+
+                    <h4 style="margin-top: 25px; color: #2563EB; font-family: 'Space Grotesk'; border-bottom: 1px solid #eee; padding-bottom: 5px;">1. Sources des Données</h4>
+                    <ul style="list-style: none; padding: 0; margin-top: 10px;">
+                        <li style="margin-bottom: 8px;"><strong>Séismes :</strong> <a href="https://www.sisfrance.net/seismes" target="_blank" style="color:#2563EB;">sisfrance.net/seismes</a></li>
+                        <li style="margin-bottom: 8px;"><strong>Mouvements de terrain :</strong> <a href="https://www.donnees.statistiques.developpement-durable.gouv.fr" target="_blank" style="color:#2563EB;">statistiques.developpement-durable.gouv.fr</a></li>
+                        <li style="margin-bottom: 8px;"><strong>Accidents industriels (ARIA) :</strong> <a href="https://www.aria.developpement-durable.gouv.fr" target="_blank" style="color:#2563EB;">aria.developpement-durable.gouv.fr</a></li>
+                        <li style="margin-bottom: 8px;"><strong>Incidents nucléaires (ASNR) :</strong> <a href="https://reglementation-controle.asnr.fr" target="_blank" style="color:#2563EB;">reglementation-controle.asnr.fr</a></li>
+                        <li style="margin-bottom: 8px;"><strong>Radon :</strong><br>
+                            - <a href="https://sante.gouv.fr" target="_blank" style="color:#2563EB;">sante.gouv.fr</a><br>
+                            - <a href="https://www.georisques.gouv.fr" target="_blank" style="color:#2563EB;">georisques.gouv.fr</a><br>
+                            - <a href="https://recherche-expertise.asnr.fr" target="_blank" style="color:#2563EB;">recherche-expertise.asnr.fr</a>
+                        </li>
+                        <li style="margin-bottom: 8px;"><strong>Inondations :</strong> <a href="https://www.georisques.gouv.fr/consulter-les-dossiers-thematiques/dossier-expert-sur-les-inondations" target="_blank" style="color:#2563EB;">Dossier Expert Géorisques</a></li>
+                        <li style="margin-bottom: 8px;"><strong>Global :</strong> <a href="https://www.observatoire-des-territoires.gouv.fr/outils/cartographie-interactive" target="_blank" style="color:#2563EB;">Observatoire des Territoires</a></li>
+                    </ul>
+
+                    <h4 style="margin-top: 20px; color: #2563EB; font-family: 'Space Grotesk';">Géométries & Référentiels</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li><a href="https://geoservices.ign.fr/adminexpress" target="_blank" style="color:#2563EB;">IGN AdminExpress</a></li>
+                        <li><a href="https://www.insee.fr/fr/information/4802589" target="_blank" style="color:#2563EB;">INSEE</a></li>
+                        <li><a href="https://www.data.gouv.fr/datasets/bd-topage-r/" target="_blank" style="color:#2563EB;">BD TOPAGE</a></li>
+                    </ul>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 25px;">
+                        <div>
+                            <h4 style="color: #2563EB; font-family: 'Space Grotesk'; margin-bottom: 10px;">2. Zone Géographique</h4>
+                            <p>France métropolitaine.</p>
+                        </div>
+                        <div>
+                            <h4 style="color: #2563EB; font-family: 'Space Grotesk'; margin-bottom: 10px;">3. Formats d’origine</h4>
+                            <p>CSV, XLSX, GEOJSON/JSON, SHP, GPKG, PDF, HTML.</p>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-top: 25px; color: #2563EB; font-family: 'Space Grotesk'; border-bottom: 1px solid #eee; padding-bottom: 5px;">5. Traitements effectués</h4>
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>Téléchargement des données</li>
+                        <li>Nettoyage (doublons, formats, dates)</li>
+                        <li>Harmonisation des champs & Calcul des centroïdes</li>
+                        <li>Jointure aux géométries</li>
+                        <li>Géoréférencement / projection en WGS84</li>
+                        <li>Production de statistiques et graphiques temporels</li>
+                    </ul>
+
+                    <div style="background: #eef2ff; padding: 15px; border-radius: 8px; margin-top: 25px;">
+                        <p style="margin: 0;"><strong>6. Système de coordonnées :</strong> EPSG:4326 (WGS84)</p>
+                        <p style="margin: 5px 0 0 0;"><strong>7. Date d’accès :</strong> 01/01/2026 (Prévisionnel)</p>
+                    </div>
+
+                    <h4 style="margin-top: 25px; color: #2563EB; font-family: 'Space Grotesk';">8. Usage</h4>
+                    <p>Alimentation d’un site internet présentant : graphiques temporels, statistiques, cartes thématiques et documentation des risques.</p>
+                </div>`
         }
     };
 
@@ -537,8 +603,7 @@
         iframe.src = url;
     }
 
-    // --- 3. OUVERTURE MODALE (MAP EN HAUT, TEXTE EN BAS, SCROLL CLASSIQUE) ---
-    // --- 3. OUVERTURE MODALE (AVEC TOUS LES GRAPHIQUES : MOUV, NUC, IND) ---
+   // --- 3. OUVERTURE MODALE (CORRIGÉE : SUPPRESSION "INFO À VENIR" POUR DONNÉES) ---
     function openModal(key) {
         const d = detailsContent[key];
         if (!d) return;
@@ -591,9 +656,8 @@
                     <div class="details-image" id="d-img-container"></div>
                 </div>`;
 
-            // --- 3. GRAPHIQUES EN BAS DE PAGE ---
+            // --- 3. GRAPHIQUES BAS DE PAGE ---
 
-            // -> GRAPHIQUE MOUVEMENT
             if (key === 'mouvement') {
                 html += `
                 <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
@@ -602,7 +666,6 @@
                 </div>`;
             }
 
-            // -> GRAPHIQUE NUCLÉAIRE (ROGNÉ)
             if (key === 'nucleaire') {
                 html += `
                 <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
@@ -613,7 +676,6 @@
                 </div>`;
             }
 
-            // -> GRAPHIQUE INDUSTRIEL (NOUVEAU)
             if (key === 'industriel') {
                 html += `
                 <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 30px;">
@@ -623,11 +685,17 @@
             }
         } 
         
-        // --- CAS 3 : AUTRES ---
+        // --- CAS 3 : AUTRES (Données, etc.) ---
         else {
              html += `
-                <div class="risk-description" style="border-left-color: ${d.color}; margin-bottom: 25px;">${d.desc}</div>
-                <div style="padding:40px; text-align:center;">Information à venir.</div>`;
+                <div class="risk-description" style="border-left-color: ${d.color}; margin-bottom: 25px;">
+                    ${d.desc}
+                </div>`;
+             
+             // CORRECTION ICI : On n'affiche "Information à venir" QUE si ce n'est PAS 'donnees'
+             if (key !== 'donnees') {
+                html += `<div style="padding:40px; text-align:center;">Information à venir.</div>`;
+             }
         }
 
         html += `</div>`; // Fin body
@@ -735,6 +803,24 @@
         window.timelineData = data;
         updateTimeline(0, type, color);
     }
+    function closeModal() {
+        const modal = document.getElementById('view-detail');
+        // On retire la classe visible pour l'animation
+        modal.classList.remove('visible');
+        // On attend la fin de l'animation pour masquer complètement (display: none)
+        setTimeout(() => {
+            modal.style.display = 'none';
+            // Sécurité : on vide le contenu pour éviter les bugs d'affichage à la réouverture
+            document.getElementById('modalContent').innerHTML = ''; 
+        }, 300);
+    }
+
+    // BONUS : Fermer en cliquant à l'extérieur (sur le fond gris)
+    document.getElementById('view-detail').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
 
     // --- MISE À JOUR CLIC (Avec gestion d'image de secours) ---
     window.updateTimeline = function(index, type, color) {
