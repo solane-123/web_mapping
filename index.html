@@ -138,6 +138,84 @@
         .right-info-area { flex: 4; overflow-y: auto; padding: 30px; background: #fff; }
 
         .timeline-item { margin-bottom: 20px; padding-left: 15px; border-left: 2px solid #ddd; }
+        /* --- CORRECTIF FRISE OBLIGATOIRE --- */
+        .timeline {
+            position: relative !important;
+            height: 120px !important;
+            width: 100%;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            display: block !important;
+    }
+
+        .timeline-line {
+            position: absolute !important;
+            top: 50%; left: 0; right: 0;
+            height: 4px;
+            background-color: #ddd; /* Couleur par défaut */
+            z-index: 1; 
+            transform: translateY(-50%);
+    }
+
+        .timeline-progress {
+            position: absolute !important;
+            top: 50%; left: 0;
+            height: 4px;
+            z-index: 2; 
+            transform: translateY(-50%);
+            transition: width 0.3s ease-out;
+    }
+
+/* C'EST ICI QUE ÇA MERDAIT AVANT : On force la position absolue */
+        .event-marker {
+            position: absolute !important;
+            top: 50% !important;
+            width: 60px;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 10;
+            cursor: pointer;
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+    }
+
+        .event-dot {
+            width: 14px; height: 14px;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            background-color: #999;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 5px;
+    }
+
+        .event-date {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #666;
+            position: absolute;
+    }
+
+/* Decalage des dates pour éviter qu'elles se chevauchent */
+    .event-marker[data-pos="above"] .event-date { bottom: 20px; }
+    .event-marker[data-pos="below"] .event-date { top: 20px; }
+
+/* État actif */
+    .event-marker.active .event-dot { transform: scale(1.3); border-color: #fff; }
+    .event-marker.active .event-date { font-weight: bold; color: #000; }
+
+/* Styles spécifiques injectés par JS, mais on assure les bases ici */
+    .details-box {
+        display: flex; gap: 30px; padding: 20px;
+        background: #fff; border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        border-top: 4px solid #ccc;
+    }
+    .details-image { flex: 1; height: 250px; background: #eee; border-radius: 8px; overflow: hidden; }
+    .details-image img { width: 100%; height: 100%; object-fit: cover; }
+    .details-text { flex: 2; }
     </style>
 </head>
 <body>
@@ -240,151 +318,252 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-        // --- DONNEES ---
-        const detailsContent = {
-            'inondation': { 
-                title: "Inondations", color: "#0083B0", icon: "fa-water", 
-                desc: "Carte interactive et comparative des risques d'inondation en France.",
-                timeline: [{year:"2017", t:"Données Inondation", d:"Analyse nationale."}],
-                chartTitle: "Coût (Mrd €)", chartType: 'line', chartLabels: ['2010', '2015', '2020', '2023'], chartData: [1.2, 0.8, 1.5, 1.1]
-            },
-            'industriel': { 
-                title: "Risques Technologiques", color: "#414345", icon: "fa-industry", 
-                desc: "Cartographie globale des risques technologiques et industriels.",
-                timeline: [{year:"2001", t:"Explosion AZF", d:"Plus grave accident industriel."}, {year:"2019", t:"Incendie Lubrizol", d:"Incendie majeur."}],
-                chartTitle: "Sites Seveso", chartType: 'bar', chartLabels: ['Seuil Haut', 'Seuil Bas'], chartData: [705, 607]
-            },
-            'seisme': { title: "Risque Sismique", color: "#D97706", icon: "fa-house-crack", desc: "La France a une sismicité modérée.", timeline: [{year:"1909", t:"Lambesc", d:""}] },
-            'nucleaire': { title: "Nucléaire", color: "#059669", icon: "fa-radiation", desc: "Parc nucléaire français.", timeline: [{year:"1980", t:"Saint-Laurent-des-Eaux", d:"Accident de niveau 4."}] },
-            'mouvement': { title: "Mouvements de Terrain", color: "#D97706", icon: "fa-hill-rockslide", desc: "Glissements et éboulements.", timeline: [{year:"--", t:"Surveillance RTM", d:"Restauration des Terrains en Montagne."}] },
-            'radon': { title: "Radon", color: "#7E22CE", icon: "fa-wind", desc: "Gaz radioactif naturel.", timeline: [{year:"2018", t:"Nouveau Zonage", d:"Classification des communes."}] }
+    // --- 1. DONNEES ---
+    const detailsContent = {
+        'inondation': { 
+            title: "Inondations", color: "#3A6EA5", icon: "fa-water", 
+            desc: "Carte des risques d'inondation.",
+            timeline: [], chartData: null 
+        },
+        'industriel': { 
+            title: "Risques Technologiques", color: "#414345", icon: "fa-industry", 
+            desc: "Cartographie globale des risques technologiques.",
+            timeline: [{year:"2001", t:"Explosion AZF", d:"Plus grave accident industriel."}, {year:"2019", t:"Incendie Lubrizol", d:"Incendie majeur."}],
+            chartTitle: "Sites Seveso", chartType: 'bar', chartLabels: ['Seuil Haut', 'Seuil Bas'], chartData: [705, 607]
+        },
+        'mouvement': { 
+            title: "Mouvements de Terrain", color: "#8C6A43", icon: "fa-hill-rockslide", 
+            desc: "Glissements et éboulements.",
+            // Les données spécifiques sont gérées dans la fonction initMouvementTimeline
+        },
+        'seisme': { title: "Risque Sismique", color: "#D97706", icon: "fa-house-crack", desc: "La France a une sismicité modérée." },
+        'nucleaire': { title: "Nucléaire", color: "#059669", icon: "fa-radiation", desc: "Parc nucléaire français." },
+        'radon': { title: "Radon", color: "#7E22CE", icon: "fa-wind", desc: "Gaz radioactif naturel." }
+    };
+
+    var currentChart = null; 
+
+    // --- 2. NAVIGATION VUES ---
+    function switchView(name) {
+        document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
+        
+        if(name !== 'detail') {
+            const view = document.getElementById('view-' + name);
+            if(view) view.classList.add('visible');
+        }
+
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        if(name === 'grid') document.querySelector('.nav-btn').classList.add('active');
+    }
+
+    // --- 3. OUVERTURE IFRAME (Carte Plein Écran) ---
+    function openMap(mode, riskType) {
+        switchView('map');
+        const iframe = document.getElementById('main-map-frame');
+        
+        document.getElementById('external-frame-container').style.display = 'block';
+        document.getElementById('map').style.display = 'none'; 
+
+        let url = "";
+        if (mode === 'naturel') {
+            url = "https://clem6703.github.io/Inondation/"; 
+        } else {
+            url = "DEP_TECH-main/index.html"; 
+        }
+
+        if (riskType && mode !== 'naturel') {
+            url += "#" + riskType;
+        }
+        iframe.src = url;
+    }
+
+    // --- 4. OUVERTURE MODALE (Le cœur du système) ---
+    function openModal(key) {
+        console.log("Tentative ouverture : " + key); // Pour vérifier dans la console
+        const d = detailsContent[key];
+        if(!d) {
+            console.error("Pas de données pour : " + key);
+            return;
+        }
+
+        let html = `
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-icon" style="background:${d.color}"><i class="fa-solid ${d.icon}"></i></div>
+                    <h2 class="modal-title">${d.title}</h2>
+                </div>
+                <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">`;
+
+        // --- CAS : INONDATION ---
+        if(key === 'inondation') {
+            html += `
+                <iframe src="https://clem6703.github.io/Inondation/" 
+                        style="width:100%; flex: 1; border:none; display:block;">
+                </iframe>`;
+        } 
+        // --- CAS : INDUSTRIEL ---
+        else if (key === 'industriel') {
+            html += `
+                <div class="split-layout">
+                    <div class="left-map-area"><iframe src="DEP_TECH-main/index.html#industriel" style="width:100%; height:100%; border:none;"></iframe></div>
+                    <div class="right-info-area">
+                        <h3>Statistiques Seveso</h3>
+                        <div style="height:200px; margin-bottom:30px;"><canvas id="riskChart"></canvas></div>
+                        <h3>Historique</h3>
+                        <div style="margin-top:20px; border-left:3px solid ${d.color}; padding-left:20px;">
+                            ${(d.timeline || []).map(t => `<div class="timeline-item" style="margin-bottom:20px;"><strong style="color:${d.color}">${t.year}</strong><br><strong>${t.t}</strong><br><span style="color:#666; font-size:0.9rem;">${t.d}</span></div>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+        }
+        // --- CAS : MOUVEMENT (LA FRISE) ---
+        else if (key === 'mouvement') {
+            html += `
+            <div style="padding: 20px;">
+                <div class="timeline-container">
+                    <div class="timeline">
+                        <div class="timeline-line"></div>
+                        <div class="timeline-progress" id="timeline-progress"></div>
+                        <div id="events-list"></div>
+                    </div>
+                </div>
+                
+                <div class="details-box">
+                    <div class="details-text">
+                        <h3 id="detail-title">Chargement...</h3>
+                        <p><strong>Année :</strong> <span id="detail-year"></span></p>
+                        <p><strong>Type :</strong> <span id="detail-movement"></span></p>
+                        <p><strong id="detail-headline" style="color:#A37F5A;"></strong></p>
+                        <p id="detail-description" style="line-height:1.6; color:#555;"></p>
+                        <p style="margin-top:15px; font-size:0.9rem; color:#888;">
+                            <i class="fa-solid fa-circle-exclamation"></i> Impact : <span id="detail-impact"></span>
+                        </p>
+                        <p style="font-size:0.9rem; color:#888;">
+                            <i class="fa-solid fa-location-dot"></i> <span id="detail-zone"></span>
+                        </p>
+                    </div>
+                    <div class="details-image" id="details-image-container">
+                        </div>
+                </div>
+            </div>`;
+        }
+        // --- CAS PAR DEFAUT ---
+        else {
+            let mapTarget = (key === 'nucleaire' || key === 'seveso') ? 'technique' : 'naturel';
+            html += `
+                <div style="padding:50px; text-align:center;">
+                    <p style="font-size:1.1rem; color:#555;">${d.desc}</p>
+                    <button onclick="openMap('${mapTarget}', '${key}'); closeModal();" style="margin-top:20px; background:${d.color}; color:white; border:none; padding:12px 25px; border-radius:30px; cursor:pointer; font-weight:bold;">
+                        Voir sur la carte globale
+                    </button>
+                </div>`;
+        }
+
+        html += `</div>`; // Fin body
+
+        document.getElementById('modalContent').innerHTML = html;
+        
+        const modal = document.getElementById('view-detail');
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => {
+            modal.classList.add('visible');
+        });
+
+        // --- EXECUTION DES SCRIPTS SPECIFIQUES ---
+        
+        // 1. Chart Industriel
+        if (d.chartData && key === 'industriel') {
+            setTimeout(() => {
+                const ctx = document.getElementById('riskChart');
+                if(ctx) {
+                    if (currentChart) currentChart.destroy();
+                    currentChart = new Chart(ctx, { 
+                        type: d.chartType || 'bar', 
+                        data: { labels: d.chartLabels, datasets: [{ label: d.chartTitle, data: d.chartData, backgroundColor: d.color, borderRadius: 5 }] }, 
+                        options: { responsive: true, maintainAspectRatio: false } 
+                    });
+                }
+            }, 300);
+        }
+
+        // 2. Frise Mouvement
+        if (key === 'mouvement') {
+            // On attend un tout petit peu que le HTML soit inséré
+            setTimeout(() => {
+                initMouvementTimeline();
+            }, 100);
+        }
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('view-detail');
+        modal.classList.remove('visible');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    // --- 5. LOGIQUE DE LA FRISE (FONCTION SÉPARÉE) ---
+    function initMouvementTimeline() {
+        console.log("Initialisation de la frise...");
+        const eventsData = [
+            { year: 1953, title: "Éboulement de l’Harmalière", headline: "Effondrement rocheux majeur en Isère.", description: "Le versant du Mont Saint-Eynard a connu un effondrement de plusieurs dizaines de milliers de m³. L'événement a coupé la route nationale.", impact: "3 morts et destructions.", movement: "Éboulement", zone: "Isère (près de Grenoble)", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Eboulement_de_La_Rivi%C3%A8re_en_mars_2025.jpg" },
+            { year: 1963, title: "St-Étienne-de-Tinée", headline: "Tragédie en montagne.", description: "Le village a été frappé par un important éboulement rocheux sur la rive gauche de la Tinée.", impact: "Plusieurs victimes.", movement: "Chute de blocs", zone: "Alpes-Maritimes", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Glissement_de_terrain_de_la_Clapi%C3%A8re%2C_Saint-%C3%89tienne-de-Tin%C3%A9e%2C_France.jpg/1200px-Glissement_de_terrain_de_la_Clapi%C3%A8re%2C_Saint-%C3%89tienne-de-Tin%C3%A9e%2C_France.jpg" },
+            { year: 1970, title: "La Clapière", headline: "Un des plus actifs d'Europe.", description: "Masse rocheuse instable de 50 millions de m³ qui s'est déplacée à des vitesses records.", impact: "Menace la vallée.", movement: "Glissement actif", zone: "Alpes-Maritimes", imageUrl: "https://www.encyclopedie-environnement.org/app/uploads/2019/06/clapiere_fig6-2016.jpg" },
+            { year: 1987, title: "Séchilienne", headline: "Instabilité du Mont Sec.", description: "Menace la vallée de la Romanche. Risque d'éboulement majeur pouvant créer un barrage naturel.", impact: "Surveillance 24/7.", movement: "Glissement latent", zone: "Isère", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/6/64/Ruines_de_S%C3%A9chilienne_le_14-07-06.jpg" },
+            { year: 1992, title: "Mont Granier", headline: "Réactivation historique.", description: "Chutes de roches massives sur ce site connu pour la catastrophe de 1248.", impact: "Routes menacées.", movement: "Éboulement", zone: "Savoie / Isère", imageUrl: "https://cdn-s-www.ledauphine.com/images/8D3FB866-6A0C-44BC-9390-357A240B07E7/MF_contenu/50-000-m3-de-roches-sont-tombes-au-mont-granier-hier-matin-1462609866.jpg" },
+            { year: 2003, title: "La Salle-en-Beaumont", headline: "Lié aux pluies d’automne.", description: "Mouvements rapides déclenchés par des précipitations exceptionnelles.", impact: "Habitations détruites.", movement: "Glissement rapide", zone: "Isère", imageUrl: "https://france3-regions.franceinfo.fr/image/Qy6yiYXL3Dh3szdO6OU20bJSzaQ/0x0:500x281/800x450/filters:format(webp)/regions/2020/06/08/5ede81e65a154_beaumont_2.jpg" },
+            { year: 2020, title: "Tempête Alex", headline: "Crues et glissements.", description: "Pluies extrêmes provoquant des coulées de boue dévastatrices dans les vallées.", impact: "Destruction majeure.", movement: "Coulées de boue", zone: "Alpes-Maritimes", imageUrl: "https://www.irma-grenoble.com/photos/st-martin-vesubie/361w001EP_Alpes-Maritimes-inondation_02-10-2020/361w260EP.jpg" }
+        ];
+
+        const container = document.getElementById('events-list');
+        if(!container) {
+            console.error("Erreur: conteneur events-list introuvable !");
+            return;
+        }
+
+        const progress = document.getElementById('timeline-progress');
+        const total = eventsData.length - 1;
+
+        // Rendu des points
+        container.innerHTML = eventsData.map((ev, i) => {
+            let pos = (i / total) * 100;
+            let side = i % 2 === 0 ? 'above' : 'below'; 
+            return `
+                <div class="event-marker" style="left:${pos}%" data-pos="${side}" onclick="updateMouvementFocus(${i})">
+                    <div class="event-dot"></div>
+                    <div class="event-date">${ev.year}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Fonction globale pour le clic
+        window.updateMouvementFocus = function(index) {
+            const ev = eventsData[index];
+            
+            // Update visuel timeline
+            document.querySelectorAll('.event-marker').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.event-marker')[index].classList.add('active');
+            
+            if(progress) progress.style.width = ((index / total) * 100) + "%";
+
+            // Update Textes
+            document.getElementById('detail-title').innerText = ev.title;
+            document.getElementById('detail-year').innerText = ev.year;
+            document.getElementById('detail-movement').innerText = ev.movement;
+            document.getElementById('detail-headline').innerText = ev.headline;
+            document.getElementById('detail-description').innerText = ev.description;
+            document.getElementById('detail-impact').innerText = ev.impact;
+            document.getElementById('detail-zone').innerText = ev.zone;
+
+            // Update Image
+            const imgContainer = document.getElementById('details-image-container');
+            imgContainer.innerHTML = `<img src="${ev.imageUrl}" onerror="this.src='https://via.placeholder.com/400x300?text=Pas+d+image'" style="width:100%; height:100%; object-fit:cover;">`;
         };
 
-        var currentChart = null; 
-
-        // --- NAVIGATION ---
-        function switchView(name) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
-            const view = document.getElementById('view-' + name);
-            if(view && name !== 'detail') view.classList.add('visible');
-        }
-
-        // --- OUVERTURE CARTES LOCALES ---
-        function openMap(mode, riskType) {
-            switchView('map');
-            const iframe = document.getElementById('main-map-frame');
-            
-            document.getElementById('external-frame-container').style.display = 'block';
-            document.getElementById('map').style.display = 'none'; 
-
-            let url = "";
-            if (mode === 'naturel') {
-                url = "DEP_NAT-main/index.html"; 
-            } else {
-                url = "DEP_TECH-main/index.html"; 
-            }
-
-            if (riskType) {
-                url += "#" + riskType;
-            }
-
-            iframe.src = url;
-        }
-
-        // --- OUVERTURE MODALE (POP-UP) ---
-        function openModal(key) {
-            const d = detailsContent[key];
-            if(!d) return;
-
-            let html = `
-                <div class="modal-header">
-                    <div class="modal-title-group">
-                        <div class="modal-icon" style="background:${d.color}"><i class="fa-solid ${d.icon}"></i></div>
-                        <h2 class="modal-title">${d.title}</h2>
-                    </div>
-                    <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="modal-body">`;
-
-            // CAS INONDATION
-            if(key === 'inondation') {
-                html += `
-                    <div class="map-banner-container">
-                        <iframe src="DEP_NAT-main/index.html#inondation"></iframe>
-                    </div>
-                    <div class="content-below-map">
-                        <div class="content-col">
-                            <h3 style="color:#333; margin-top:0;">Statistiques</h3>
-                            <div style="height:250px;"><canvas id="riskChart"></canvas></div>
-                        </div>
-                        <div class="content-col">
-                            <h3 style="color:#333; margin-top:0;">Chronologie</h3>
-                            <div style="margin-top:20px; border-left:3px solid ${d.color}; padding-left:20px;">
-                                ${d.timeline.map(t => `
-                                    <div class="timeline-item" style="margin-bottom:20px;">
-                                        <strong style="color:${d.color}">${t.year}</strong><br>
-                                        <strong>${t.t}</strong><br><span style="color:#666; font-size:0.9rem;">${t.d}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>`;
-            } 
-            // CAS INDUSTRIEL
-            else if (key === 'industriel') {
-                html += `
-                    <div class="split-layout">
-                        <div class="left-map-area"><iframe src="DEP_TECH-main/index.html#industriel" style="width:100%; height:100%; border:none;"></iframe></div>
-                        <div class="right-info-area">
-                            <h3>Statistiques Seveso</h3>
-                            <div style="height:200px; margin-bottom:30px;"><canvas id="riskChart"></canvas></div>
-                            <h3>Historique</h3>
-                            <div style="margin-top:20px; border-left:3px solid ${d.color}; padding-left:20px;">
-                                ${d.timeline.map(t => `<div class="timeline-item" style="margin-bottom:20px;"><strong style="color:${d.color}">${t.year}</strong><br><strong>${t.t}</strong><br><span style="color:#666; font-size:0.9rem;">${t.d}</span></div>`).join('')}
-                            </div>
-                        </div>
-                    </div>`;
-            }
-            // AUTRES
-            else {
-                let mapTarget = (key === 'nucleaire' || key === 'seveso') ? 'technique' : 'naturel';
-                html += `
-                    <div style="padding:50px; text-align:center;">
-                        <p style="font-size:1.1rem; color:#555;">${d.desc}</p>
-                        <button onclick="openMap('${mapTarget}', '${key}'); closeModal();" style="margin-top:20px; background:${d.color}; color:white; border:none; padding:12px 25px; border-radius:30px; cursor:pointer; font-weight:bold;">
-                            Voir sur la carte globale
-                        </button>
-                    </div>`;
-            }
-
-            html += `</div>`; // Fin body
-
-            document.getElementById('modalContent').innerHTML = html;
-            
-            // Afficher la modale avec un léger délai pour l'animation
-            const modal = document.getElementById('view-detail');
-            modal.style.display = 'flex';
-            requestAnimationFrame(() => {
-                modal.classList.add('visible');
-            });
-
-            // Chart
-            if (d.chartData) {
-                setTimeout(() => {
-                    const ctx = document.getElementById('riskChart');
-                    if(ctx) {
-                        if (currentChart) currentChart.destroy();
-                        currentChart = new Chart(ctx, { type: d.chartType || 'bar', data: { labels: d.chartLabels, datasets: [{ label: d.chartTitle, data: d.chartData, backgroundColor: d.color, borderRadius: 5 }] }, options: { responsive: true, maintainAspectRatio: false } });
-                    }
-                }, 300);
-            }
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('view-detail');
-            modal.classList.remove('visible');
-            setTimeout(() => modal.style.display = 'none', 300);
-        }
-    </script>
+        // Initialiser le premier
+        window.updateMouvementFocus(0);
+    }
+</script>
 </body>
 </html>
