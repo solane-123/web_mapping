@@ -19,6 +19,27 @@
             --primary: #2563EB; --primary-light: #EFF6FF;
             --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
             --radius-lg: 24px; --radius-md: 16px;
+
+                /* Couleurs Frise Mouvement (mv) */
+            --color-primary-mv: #A37F5A; 
+            --color-active-mv: #BF956D;
+            --color-line-mv: #D9C3A6;
+            --color-bg-mv: #f5f8fb;
+            --color-dot-inactive-mv: #aaa;
+    
+    /* Couleurs Frise Nucléaire (nu) */
+            --color-primary-nu: #595530; 
+            --color-active-nu: #8B8148;
+            --color-line-nu: #C4C09A;
+            --color-bg-nu: #f5f8fb;
+            --color-dot-inactive-nu: #aaa;
+    
+    /* Couleurs Frise Radon (ra) - VIOLET */
+            --color-primary-ra: #6A525E; 
+            --color-active-ra: #917280;
+            --color-line-ra: #C8BDC4;
+            --color-bg-ra: #f5f8fb;
+            --color-dot-inactive-ra: #aaa;
         }
         
         * { box-sizing: border-box; }
@@ -317,74 +338,46 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <script>
-    // --- 1. DONNEES ---
+   <script>
+    // --- 1. CONFIGURATION ---
     const detailsContent = {
-        'inondation': { 
-            title: "Inondations", color: "#3A6EA5", icon: "fa-water", 
-            desc: "Carte des risques d'inondation.",
-            timeline: [], chartData: null 
-        },
-        'industriel': { 
-            title: "Risques Technologiques", color: "#414345", icon: "fa-industry", 
-            desc: "Cartographie globale des risques technologiques.",
-            timeline: [{year:"2001", t:"Explosion AZF", d:"Plus grave accident industriel."}, {year:"2019", t:"Incendie Lubrizol", d:"Incendie majeur."}],
-            chartTitle: "Sites Seveso", chartType: 'bar', chartLabels: ['Seuil Haut', 'Seuil Bas'], chartData: [705, 607]
-        },
-        'mouvement': { 
-            title: "Mouvements de Terrain", color: "#8C6A43", icon: "fa-hill-rockslide", 
-            desc: "Glissements et éboulements.",
-            // Les données spécifiques sont gérées dans la fonction initMouvementTimeline
-        },
-        'seisme': { title: "Risque Sismique", color: "#D97706", icon: "fa-house-crack", desc: "La France a une sismicité modérée." },
-        'nucleaire': { title: "Nucléaire", color: "#059669", icon: "fa-radiation", desc: "Parc nucléaire français." },
-        'radon': { title: "Radon", color: "#7E22CE", icon: "fa-wind", desc: "Gaz radioactif naturel." }
+        'inondation': { title: "Inondations", color: "#3A6EA5", icon: "fa-water" },
+        'industriel': { title: "Risques Technologiques", color: "#414345", icon: "fa-industry" },
+        'seisme': { title: "Séismes", color: "#D97706", icon: "fa-house-crack", desc: "Sismicité modérée en France." },
+        
+        // LES 3 FRISES (Mouvement, Nucléaire, Radon)
+        'mouvement': { title: "Mouvements de Terrain", color: "#8C6A43", icon: "fa-hill-rockslide" }, 
+        'nucleaire': { title: "Nucléaire", color: "#595530", icon: "fa-radiation" },
+        'radon': { title: "Radon", color: "#917280", icon: "fa-wind" } // Couleur Violette
     };
 
-    var currentChart = null; 
-
-    // --- 2. NAVIGATION VUES ---
+    // --- 2. NAVIGATION ---
     function switchView(name) {
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('visible'));
-        
-        if(name !== 'detail') {
-            const view = document.getElementById('view-' + name);
-            if(view) view.classList.add('visible');
-        }
-
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        if(name === 'grid') document.querySelector('.nav-btn').classList.add('active');
+        const view = document.getElementById('view-' + name);
+        if (view) view.classList.add('visible');
     }
 
-    // --- 3. OUVERTURE IFRAME (Carte Plein Écran) ---
     function openMap(mode, riskType) {
         switchView('map');
         const iframe = document.getElementById('main-map-frame');
-        
         document.getElementById('external-frame-container').style.display = 'block';
         document.getElementById('map').style.display = 'none'; 
-
-        let url = "";
-        if (mode === 'naturel') {
-            url = "https://clem6703.github.io/Inondation/"; 
-        } else {
-            url = "DEP_TECH-main/index.html"; 
-        }
-
-        if (riskType && mode !== 'naturel') {
-            url += "#" + riskType;
-        }
+        let url = (mode === 'naturel') ? "https://clem6703.github.io/Inondation/" : "DEP_TECH-main/index.html";
+        if (riskType) url += "#" + riskType;
         iframe.src = url;
     }
 
-    // --- 4. OUVERTURE MODALE (Le cœur du système) ---
+    function closeModal() {
+        const modal = document.getElementById('view-detail');
+        modal.classList.remove('visible');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+
+    // --- 3. OUVERTURE MODALE ---
     function openModal(key) {
-        console.log("Tentative ouverture : " + key); // Pour vérifier dans la console
         const d = detailsContent[key];
-        if(!d) {
-            console.error("Pas de données pour : " + key);
-            return;
-        }
+        if (!d) return;
 
         let html = `
             <div class="modal-header">
@@ -394,176 +387,157 @@
                 </div>
                 <button class="close-btn" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="modal-body">`;
+            <div class="modal-body" style="padding: 20px;">`;
 
-        // --- CAS : INONDATION ---
-        if(key === 'inondation') {
-            html += `
-                <iframe src="https://clem6703.github.io/Inondation/" 
-                        style="width:100%; flex: 1; border:none; display:block;">
-                </iframe>`;
+        // CAS INONDATION
+        if (key === 'inondation') {
+            html += `<iframe src="https://clem6703.github.io/Inondation/" style="width:100%; height:500px; border:none;"></iframe>`;
         } 
-        // --- CAS : INDUSTRIEL ---
-        else if (key === 'industriel') {
+        // CAS FRISES : MOUVEMENT, NUCLEAIRE ET RADON (Ajouté ici)
+        else if (key === 'mouvement' || key === 'nucleaire' || key === 'radon') {
             html += `
-                <div class="split-layout">
-                    <div class="left-map-area"><iframe src="DEP_TECH-main/index.html#industriel" style="width:100%; height:100%; border:none;"></iframe></div>
-                    <div class="right-info-area">
-                        <h3>Statistiques Seveso</h3>
-                        <div style="height:200px; margin-bottom:30px;"><canvas id="riskChart"></canvas></div>
-                        <h3>Historique</h3>
-                        <div style="margin-top:20px; border-left:3px solid ${d.color}; padding-left:20px;">
-                            ${(d.timeline || []).map(t => `<div class="timeline-item" style="margin-bottom:20px;"><strong style="color:${d.color}">${t.year}</strong><br><strong>${t.t}</strong><br><span style="color:#666; font-size:0.9rem;">${t.d}</span></div>`).join('')}
-                        </div>
-                    </div>
-                </div>`;
-        }
-        // --- CAS : MOUVEMENT (LA FRISE) ---
-        else if (key === 'mouvement') {
-            html += `
-            <div style="padding: 20px;">
                 <div class="timeline-container">
                     <div class="timeline">
-                        <div class="timeline-line"></div>
-                        <div class="timeline-progress" id="timeline-progress"></div>
+                        <div class="timeline-line" id="line-${key}"></div>
+                        <div class="timeline-progress" id="progress-${key}"></div>
                         <div id="events-list"></div>
                     </div>
                 </div>
                 
-                <div class="details-box">
-                    <div class="details-text">
-                        <h3 id="detail-title">Chargement...</h3>
-                        <p><strong>Année :</strong> <span id="detail-year"></span></p>
-                        <p><strong>Type :</strong> <span id="detail-movement"></span></p>
-                        <p><strong id="detail-headline" style="color:#A37F5A;"></strong></p>
-                        <p id="detail-description" style="line-height:1.6; color:#555;"></p>
-                        <p style="margin-top:15px; font-size:0.9rem; color:#888;">
-                            <i class="fa-solid fa-circle-exclamation"></i> Impact : <span id="detail-impact"></span>
-                        </p>
-                        <p style="font-size:0.9rem; color:#888;">
-                            <i class="fa-solid fa-location-dot"></i> <span id="detail-zone"></span>
-                        </p>
-                    </div>
-                    <div class="details-image" id="details-image-container">
+                <div class="details-box" id="details-box" style="border-top-color: ${d.color}">
+                    <div class="details-text" id="text-container">
+                        <h3 id="d-title" style="color:${d.color}">Sélectionnez une date</h3>
+                        <p><strong>Année :</strong> <span id="d-year">-</span></p>
+                        <p><strong id="d-headline"></strong></p>
+                        <p id="d-desc"></p>
+                        <div id="d-radon-extras" style="display:none; margin-top:10px; padding:10px; background:#f4f4f4; border-radius:8px;">
+                            <p><strong>Clé :</strong> <span id="d-keydetail"></span></p>
+                            <p><strong>Réf :</strong> <span id="d-ref"></span></p>
                         </div>
-                </div>
-            </div>`;
-        }
-        // --- CAS PAR DEFAUT ---
-        else {
-            let mapTarget = (key === 'nucleaire' || key === 'seveso') ? 'technique' : 'naturel';
-            html += `
-                <div style="padding:50px; text-align:center;">
-                    <p style="font-size:1.1rem; color:#555;">${d.desc}</p>
-                    <button onclick="openMap('${mapTarget}', '${key}'); closeModal();" style="margin-top:20px; background:${d.color}; color:white; border:none; padding:12px 25px; border-radius:30px; cursor:pointer; font-weight:bold;">
-                        Voir sur la carte globale
-                    </button>
+                        <p id="d-impact-line"><em>Impact : <span id="d-impact"></span></em></p>
+                    </div>
+                    <div class="details-image" id="d-img-container"></div>
                 </div>`;
+        } 
+        // AUTRES
+        else {
+            html += `<div style="padding:40px; text-align:center;">${d.desc || "Information à venir."}</div>`;
         }
 
         html += `</div>`; // Fin body
 
         document.getElementById('modalContent').innerHTML = html;
-        
         const modal = document.getElementById('view-detail');
         modal.style.display = 'flex';
-        requestAnimationFrame(() => {
-            modal.classList.add('visible');
-        });
+        setTimeout(() => modal.classList.add('visible'), 10);
 
-        // --- EXECUTION DES SCRIPTS SPECIFIQUES ---
+        // Lancement Frise
+        if (key === 'mouvement' || key === 'nucleaire' || key === 'radon') {
+            setTimeout(() => { initTimeline(key, d.color); }, 50);
+        }
+    }
+
+    // --- 4. LOGIQUE FRISE ---
+    function initTimeline(type, color) {
         
-        // 1. Chart Industriel
-        if (d.chartData && key === 'industriel') {
-            setTimeout(() => {
-                const ctx = document.getElementById('riskChart');
-                if(ctx) {
-                    if (currentChart) currentChart.destroy();
-                    currentChart = new Chart(ctx, { 
-                        type: d.chartType || 'bar', 
-                        data: { labels: d.chartLabels, datasets: [{ label: d.chartTitle, data: d.chartData, backgroundColor: d.color, borderRadius: 5 }] }, 
-                        options: { responsive: true, maintainAspectRatio: false } 
-                    });
-                }
-            }, 300);
-        }
-
-        // 2. Frise Mouvement
-        if (key === 'mouvement') {
-            // On attend un tout petit peu que le HTML soit inséré
-            setTimeout(() => {
-                initMouvementTimeline();
-            }, 100);
-        }
-    }
-
-    function closeModal() {
-        const modal = document.getElementById('view-detail');
-        modal.classList.remove('visible');
-        setTimeout(() => modal.style.display = 'none', 300);
-    }
-
-    // --- 5. LOGIQUE DE LA FRISE (FONCTION SÉPARÉE) ---
-    function initMouvementTimeline() {
-        console.log("Initialisation de la frise...");
-        const eventsData = [
-            { year: 1953, title: "Éboulement de l’Harmalière", headline: "Effondrement rocheux majeur en Isère.", description: "Le versant du Mont Saint-Eynard a connu un effondrement de plusieurs dizaines de milliers de m³. L'événement a coupé la route nationale.", impact: "3 morts et destructions.", movement: "Éboulement", zone: "Isère (près de Grenoble)", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Eboulement_de_La_Rivi%C3%A8re_en_mars_2025.jpg" },
-            { year: 1963, title: "St-Étienne-de-Tinée", headline: "Tragédie en montagne.", description: "Le village a été frappé par un important éboulement rocheux sur la rive gauche de la Tinée.", impact: "Plusieurs victimes.", movement: "Chute de blocs", zone: "Alpes-Maritimes", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Glissement_de_terrain_de_la_Clapi%C3%A8re%2C_Saint-%C3%89tienne-de-Tin%C3%A9e%2C_France.jpg/1200px-Glissement_de_terrain_de_la_Clapi%C3%A8re%2C_Saint-%C3%89tienne-de-Tin%C3%A9e%2C_France.jpg" },
-            { year: 1970, title: "La Clapière", headline: "Un des plus actifs d'Europe.", description: "Masse rocheuse instable de 50 millions de m³ qui s'est déplacée à des vitesses records.", impact: "Menace la vallée.", movement: "Glissement actif", zone: "Alpes-Maritimes", imageUrl: "https://www.encyclopedie-environnement.org/app/uploads/2019/06/clapiere_fig6-2016.jpg" },
-            { year: 1987, title: "Séchilienne", headline: "Instabilité du Mont Sec.", description: "Menace la vallée de la Romanche. Risque d'éboulement majeur pouvant créer un barrage naturel.", impact: "Surveillance 24/7.", movement: "Glissement latent", zone: "Isère", imageUrl: "https://upload.wikimedia.org/wikipedia/commons/6/64/Ruines_de_S%C3%A9chilienne_le_14-07-06.jpg" },
-            { year: 1992, title: "Mont Granier", headline: "Réactivation historique.", description: "Chutes de roches massives sur ce site connu pour la catastrophe de 1248.", impact: "Routes menacées.", movement: "Éboulement", zone: "Savoie / Isère", imageUrl: "https://cdn-s-www.ledauphine.com/images/8D3FB866-6A0C-44BC-9390-357A240B07E7/MF_contenu/50-000-m3-de-roches-sont-tombes-au-mont-granier-hier-matin-1462609866.jpg" },
-            { year: 2003, title: "La Salle-en-Beaumont", headline: "Lié aux pluies d’automne.", description: "Mouvements rapides déclenchés par des précipitations exceptionnelles.", impact: "Habitations détruites.", movement: "Glissement rapide", zone: "Isère", imageUrl: "https://france3-regions.franceinfo.fr/image/Qy6yiYXL3Dh3szdO6OU20bJSzaQ/0x0:500x281/800x450/filters:format(webp)/regions/2020/06/08/5ede81e65a154_beaumont_2.jpg" },
-            { year: 2020, title: "Tempête Alex", headline: "Crues et glissements.", description: "Pluies extrêmes provoquant des coulées de boue dévastatrices dans les vallées.", impact: "Destruction majeure.", movement: "Coulées de boue", zone: "Alpes-Maritimes", imageUrl: "https://www.irma-grenoble.com/photos/st-martin-vesubie/361w001EP_Alpes-Maritimes-inondation_02-10-2020/361w260EP.jpg" }
+        // Données Mouvements
+        const dataMouv = [
+            { year: 1953, t: "L’Harmalière", h: "Effondrement majeur en Isère.", d: "Le versant du Mont Saint-Eynard a connu un effondrement de plusieurs dizaines de milliers de m³.", i: "3 morts.", img: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Eboulement_de_La_Rivi%C3%A8re_en_mars_2025.jpg" },
+            { year: 1970, t: "La Clapière", h: "Glissement actif.", d: "Masse rocheuse instable de 50 millions de m³ déplacée à vitesse record.", i: "Menace la vallée.", img: "https://www.encyclopedie-environnement.org/app/uploads/2019/06/clapiere_fig6-2016.jpg" },
+            { year: 1987, t: "Séchilienne", h: "Instabilité du Mont Sec.", d: "Risque d'éboulement majeur pouvant créer un barrage naturel.", i: "Surveillance 24/7.", img: "https://upload.wikimedia.org/wikipedia/commons/6/64/Ruines_de_S%C3%A9chilienne_le_14-07-06.jpg" },
+            { year: 1992, t: "Mont Granier", h: "Réactivation historique.", d: "Chutes de roches massives sur ce site connu pour la catastrophe de 1248.", i: "Routes menacées.", img: "https://cdn-s-www.ledauphine.com/images/8D3FB866-6A0C-44BC-9390-357A240B07E7/MF_contenu/50-000-m3-de-roches-sont-tombes-au-mont-granier-hier-matin-1462609866.jpg" },
+            { year: 2020, t: "Tempête Alex", h: "Crues et glissements.", d: "Pluies extrêmes provoquant des coulées de boue dévastatrices.", i: "Destruction majeure.", img: "https://www.irma-grenoble.com/photos/st-martin-vesubie/361w001EP_Alpes-Maritimes-inondation_02-10-2020/361w260EP.jpg" }
         ];
 
+        // Données Nucléaire
+        const dataNuc = [
+            { year: 1969, t: "St-Laurent A1", h: "Fusion partielle (INES 4).", d: "Erreur de chargement entraînant la fusion de 50kg d'uranium.", i: "Contamination interne.", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/A1_A2_saint_laurent_FK.jpg/500px-A1_A2_saint_laurent_FK.jpg" },
+            { year: 1980, t: "St-Laurent A2", h: "Accident INES 4.", d: "Fusion de combustible due à la corrosion.", i: "Arrêt définitif filière.", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/HD.15.076_%2811840243393%29.jpg/500px-HD.15.076_%2811840243393%29.jpg" },
+            { year: 1999, t: "Le Blayais", h: "Inondation centrale.", d: "Tempête Martin : submersion partielle et perte de systèmes de sûreté.", i: "Arrêt d'urgence.", img: "https://media.sudouest.fr/9775433/1200x-1/so-57ecd02466a4bdbe429d2579-ph0.jpg" },
+            { year: 2008, t: "Tricastin", h: "Fuite uranium.", d: "Déversement accidentel de 74kg d'uranium dans les rivières.", i: "Interdiction consommation eau.", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Site_nucl%C3%A9aire_Tricastin.jpg/500px-Site_nucl%C3%A9aire_Tricastin.jpg" },
+            { year: 2011, t: "Fukushima (Impact)", h: "Stress tests.", d: "Suite à la catastrophe japonaise, audit complet du parc français.", i: "Renforcement normes (ASN).", img: "https://www.connaissancedesenergies.org/sites/connaissancedesenergies.org/files/styles/image_370px_large/public/image_article/Fukushima-Daiichi-FP.jpg" }
+        ];
+
+        // Données Radon (NOUVEAU)
+        const dataRadon = [
+            { year: 1999, t: "Premier Zonage", h: "Création des zones prioritaires.", d: "Début de la prise en compte réglementaire du risque radon.", i: "Identification des classes 1, 2 et 3.", keyDetail: "Zonage initial", ref: "Circulaire 13/12/1999" },
+            { year: 2002, t: "Écoles", h: "Recommandations scolaires.", d: "Première obligation de surveillance dans les lieux recevant des enfants.", i: "Mesure obligatoire.", keyDetail: "Protection enfance", ref: "Circulaire 2002/105" },
+            { year: 2010, t: "Bâtiments Publics", h: "Extension surveillance.", d: "Obligation étendue à certains bâtiments publics et souterrains.", i: "Surveillance accrue.", keyDetail: "ERP et souterrains", ref: "Décret 2010-222" },
+            { year: 2015, t: "Directive UE", h: "Réglementation Européenne.", d: "Transposition de la directive Euratom. Seuil fixé à 300 Bq/m³.", i: "Harmonisation européenne.", keyDetail: "Seuil 300 Bq/m³", ref: "Euratom 2013/59" },
+            { year: 2018, t: "Nouveau Zonage", h: "Zonage à la commune.", d: "Le zonage devient plus précis (5 catégories).", i: "Mesure obligatoire étendue.", keyDetail: "Zonage précis", ref: "Décret 2018-437" },
+            { year: 2022, t: "Constructions", h: "Normes construction.", d: "Nouvelles recommandations pour l'étanchéité des bâtiments neufs.", i: "Prévention dès la construction.", keyDetail: "Normes BTP", ref: "Arrêté ministériel" }
+        ];
+
+        // Sélection des données
+        let data;
+        if (type === 'mouvement') data = dataMouv;
+        else if (type === 'nucleaire') data = dataNuc;
+        else data = dataRadon; // Radon
+        
         const container = document.getElementById('events-list');
-        if(!container) {
-            console.error("Erreur: conteneur events-list introuvable !");
-            return;
-        }
+        const line = document.getElementById('line-' + type);
+        const progressBar = document.getElementById('progress-' + type);
 
-        const progress = document.getElementById('timeline-progress');
-        const total = eventsData.length - 1;
+        if(line) line.style.backgroundColor = '#ddd';
+        if(progressBar) progressBar.style.backgroundColor = color;
 
-        // Rendu des points
-        container.innerHTML = eventsData.map((ev, i) => {
-            let pos = (i / total) * 100;
-            let side = i % 2 === 0 ? 'above' : 'below'; 
+        // Génération HTML
+        container.innerHTML = data.map((ev, i) => {
+            let leftPos = (i / (data.length - 1)) * 100;
+            let posClass = (i % 2 === 0) ? 'above' : 'below';
+            
             return `
-                <div class="event-marker" style="left:${pos}%" data-pos="${side}" onclick="updateMouvementFocus(${i})">
-                    <div class="event-dot"></div>
-                    <div class="event-date">${ev.year}</div>
+                <div class="event-marker" style="left:${leftPos}%" data-pos="${posClass}" onclick="updateTimeline(${i}, '${type}', '${color}')">
+                    <div class="event-dot" style="border-color:${color}"></div>
+                    <div class="event-date" style="color:${color}">${ev.year}</div>
                 </div>
             `;
         }).join('');
 
-        // Fonction globale pour le clic
-        window.updateMouvementFocus = function(index) {
-            const ev = eventsData[index];
-            
-            // Update visuel timeline
-            document.querySelectorAll('.event-marker').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.event-marker')[index].classList.add('active');
-            
-            if(progress) progress.style.width = ((index / total) * 100) + "%";
-
-            // Update Textes
-            document.getElementById('detail-title').innerText = ev.title;
-            document.getElementById('detail-year').innerText = ev.year;
-            document.getElementById('detail-movement').innerText = ev.movement;
-            document.getElementById('detail-headline').innerText = ev.headline;
-            document.getElementById('detail-description').innerText = ev.description;
-            document.getElementById('detail-impact').innerText = ev.impact;
-            document.getElementById('detail-zone').innerText = ev.zone;
-
-            // Update Image
-            const imgContainer = document.getElementById('details-image-container');
-            imgContainer.innerHTML = `<img src="${ev.imageUrl}" onerror="this.src='https://via.placeholder.com/400x300?text=Pas+d+image'" style="width:100%; height:100%; object-fit:cover;">`;
-        };
-
-        // Initialiser le premier
-        window.updateMouvementFocus(0);
+        window.timelineData = data;
+        updateTimeline(0, type, color);
     }
+
+    // --- MISE À JOUR CLIC ---
+    window.updateTimeline = function(index, type, color) {
+        const data = window.timelineData;
+        const ev = data[index];
+
+        // Points
+        document.querySelectorAll('.event-marker').forEach(el => {
+            el.classList.remove('active');
+            el.querySelector('.event-dot').style.background = '#fff';
+        });
+        const active = document.querySelectorAll('.event-marker')[index];
+        active.classList.add('active');
+        active.querySelector('.event-dot').style.background = color;
+
+        // Barre
+        const progressBar = document.getElementById('progress-' + type);
+        if(progressBar) progressBar.style.width = (index / (data.length - 1)) * 100 + "%";
+
+        // Textes standards
+        document.getElementById('d-title').innerText = ev.t;
+        document.getElementById('d-year').innerText = ev.year;
+        document.getElementById('d-headline').innerText = ev.h;
+        document.getElementById('d-desc').innerText = ev.d;
+        document.getElementById('d-impact').innerText = ev.i;
+
+        // Gestion Spécifique Radon (Pas d'image, mais texte en plus)
+        const imgDiv = document.getElementById('d-img-container');
+        const extraDiv = document.getElementById('d-radon-extras');
+        
+        if (type === 'radon') {
+            imgDiv.style.display = 'none'; // Cacher l'image
+            extraDiv.style.display = 'block'; // Montrer les infos radon
+            document.getElementById('d-keydetail').innerText = ev.keyDetail;
+            document.getElementById('d-ref').innerText = ev.ref;
+        } else {
+            imgDiv.style.display = 'block'; // Montrer l'image
+            extraDiv.style.display = 'none'; // Cacher infos radon
+            imgDiv.innerHTML = `<img src="${ev.img}" onerror="this.style.display='none'">`;
+        }
+    };
 </script>
 </body>
 </html>
